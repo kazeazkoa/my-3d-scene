@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>低多边形 · 石子小径 · 植物点缀 · 双恐龙</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', 'Poppins', 'Microsoft YaHei', sans-serif;
+            background-color: #1a2a3a;
+        }
+    </style>
+</head>
+<body>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+        import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
+        import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        
+        // --- 初始化场景 ---
+        const scene = new THREE.Scene();
+        
+        // 渐变天空
+        function createGradientSky() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#2f89e0');
+            gradient.addColorStop(0.55, '#e0b890');
+            gradient.addColorStop(1, '#c8935f');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.mapping = THREE.EquirectangularReflectionMapping;
+            return texture;
+        }
+        scene.background = createGradientSky();
+        
+        // 橙黄色雾气
+        scene.fog = new THREE.FogExp2(0xdaa679, 0.022);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 200);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+        
+        // 黑色外轮廓描边
+        const composer = new EffectComposer(renderer);
+        const renderPass = new RenderPass(scene, camera);
+        composer.addPass(renderPass);
+        
+        const outlineShader = {
+            uniforms: {
+                tDiffuse: { value: null },
+                edgeColor: { value: new THREE.Color(0x000000) },
+                edgeStrength: { value: 1.5 },
+                bgMix: { value: 1.0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D tDiffuse;
+                uniform vec3 edgeColor;
+                uniform float edgeStrength;
+                uniform float bgMix;
+                varying vec2 vUv;
+                
+                void main() {
+                    vec2 texelSize = 1.0 / vec2(textureSize(tDiffuse, 0));
+                    vec3 color = texture2D(tDiffuse, vUv).rgb;
+                    
+                    float gx = 0.0;
+                    float gy = 0.0;
+                    
+                    for (int i = -1; i <= 1; i++) {
+                        for (int j = -1; j <= 1; j++) {
+                            vec2 offset = vec2(float(i), float(j)) * texelSize;
+                            float lum = dot(texture2D(tDiffuse, vUv + offset).rgb, vec3(0.299, 0.587, 0.114));
+                            
+                            float kernelX = 0.0;
+                            if (i == -1) kernelX = -1.0;
+                            if (i == 1) kernelX = 1.0;
+                            if (j == -1) kernelX *= 1.0;
+                            if (j == 0) kernelX *= 2.0;
+                            if (j == 1) kernelX *= 1.0;
+                            
+                            float kernelY = 0.0;
+                            if (j == -1) kernelY = -1.0;
+                            if (j == 1) kernelY = 1.0;
+                            if (i == -1) kernelY *= 1.0;
+                            if (i == 0) kernelY *= 2.0;
+                            if (i == 1) kernelY *= 1.0;
+                            
+                            gx += lum * kernelX;
+                            gy += lum * kernelY;
+                        }
+                    }
+                    
+                    float edge = sqrt(gx*gx + gy*gy);
+                    edge = clamp(edge * edgeStrength, 0.0, 1.0);
+                    vec3 finalColor = mix(color, edgeColor, edge);
+                    finalColor = mix(finalColor, color, 1.0 - bgMix * 0.2);
+                    gl_FragColor = vec4(finalColor, 1.0);
+                }
+            `
+        };
+        
+        const outlinePass = new ShaderPass(outlineShader);
+        outlinePass.renderToScreen = true;
+        composer.addPass(outlinePass);
+        
+        // ========== 地形高度函数 ==========
+        function getTerrainHeight(x, z) {
+            let y = -1.6;
+            y += Math.sin(x * 0.18) * 0.32;
+            y += Math.cos(z * 0.22) * 0.32;
+            y += Math.sin(x * 0.45 + 1.2) * 0.22;
+            y += Math.cos(z * 0.5 + 0.7) * 0.22;
+            y += Math.sin(x * 1.2 + z * 0.9) * 0.1;
+            y += Math.cos(z * 1.3 - x * 0.8) * 0.08;
+            const edgeFactor = 1.0 - Math.min(1.0, Math.abs(x) / 45.0) * 0.2;
+            return y * edgeFactor;
+        }
+        
+        // ========== 1. 起伏地面 ==========
+        const groundColorHex = 0x333919;
+        const groundColorObj = new THREE.Color(groundColorHex);
+        
+        const width = 136;
+        const depth = 164;
+        const segmentsX = 136;
+        const segmentsZ = 164;
+        const geometry = new THREE.PlaneGeometry(width, depth, segmentsX, segmentsZ);
+        geometry.rotateX(-Math.PI / 2);
+        const positions = geometry.attributes.position.array;
+        const colors = [];
+        for (let i = 0; i < positions.length; i += 3) {
+            const x = positions[i];
+            const z = positions[i+2];
+            const y = getTerrainHeight(x, z);
+            positions[i+1] = y;
+            colors.push(groundColorObj.r, groundColorObj.g, groundColorObj.b);
+        }
+        geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(colors), 3));
+        geometry.computeVertexNormals();
+        
+        const groundMat = new THREE.MeshStandardMaterial({
+            vertexColors: true,
+            roughness: 0.8,
+            metalness: 0.0,
+            flatShading: true,
+            emissive: new THREE.Color(0x222222)
+        });
+        const groundMesh = new THREE.Mesh(geometry, groundMat);
+        groundMesh.receiveShadow = true;
+        groundMesh.castShadow = false;
+        scene.add(groundMesh);
+        
+        // ========== 2. 蜿蜒路径曲线 ==========
+        const curvePoints = [
+            new THREE.Vector3(0, 1.2, 28), new THREE.Vector3(0, 1.2, 24),
+            new THREE.Vector3(0, 1.2, 20), new THREE.Vector3(0, 1.2, 16),
+            new THREE.Vector3(2, 2.0, 12), new THREE.Vector3(4, 3.0, 8),
+            new THREE.Vector3(2, 4.0, 4), new THREE.Vector3(-1, 4.5, 0),
+            new THREE.Vector3(-4, 4.0, -4), new THREE.Vector3(-3, 3.0, -8),
+            new THREE.Vector3(0, 2.0, -12), new THREE.Vector3(4, 1.0, -16),
+            new THREE.Vector3(3, 0.0, -20), new THREE.Vector3(-1, -0.5, -24),
+            new THREE.Vector3(-4, -0.2, -28), new THREE.Vector3(-2, 0.5, -32),
+            new THREE.Vector3(2, 1.0, -36), new THREE.Vector3(5, 1.5, -40),
+            new THREE.Vector3(3, 1.8, -44),
+            new THREE.Vector3(0, 1.5, -50),
+            new THREE.Vector3(-3, 1.0, -56),
+            new THREE.Vector3(2, 0.5, -62),
+            new THREE.Vector3(5, 0.0, -68),
+            new THREE.Vector3(1, -0.5, -74),
+            new THREE.Vector3(-2, 0.0, -80)
+        ];
+        
+        const cameraCurve = new THREE.CatmullRomCurve3(curvePoints);
+        cameraCurve.curveType = 'centripetal';
+        cameraCurve.closed = false;
+        cameraCurve.tension = 0.5;
+        
+        const trailPoints = cameraCurve.getPoints(600);
+        const trailGeometry = new THREE.BufferGeometry().setFromPoints(trailPoints);
+        const trailMaterial = new THREE.LineBasicMaterial({ color: 0x88aacc });
+        const curveTrail = new THREE.Line(trailGeometry, trailMaterial);
+        scene.add(curveTrail);
+        
+        // ========== 3. 道路 (石子小径) ==========
+        const pathWidth = 5.0; // 稍宽，显得自然
+        const segmentsPerMeter = 1.8;
+        const totalLength = cameraCurve.getLength();
+        const numSegments = Math.max(50, Math.floor(totalLength * segmentsPerMeter));
+        
+        const samples = [];
+        for (let i = 0; i <= numSegments; i++) {
+            const t = i / numSegments;
+            const point = cameraCurve.getPoint(t);
+            const tangent = cameraCurve.getTangent(t).normalize();
+            samples.push({ point, tangent });
+        }
+        
+        const vertices = [];
+        const indices = [];
+        const normals = [];
+        const uvs = [];
+        const up = new THREE.Vector3(0, 1, 0);
+        
+        for (let i = 0; i < samples.length; i++) {
+            const { point, tangent } = samples[i];
+            const right = new THREE.Vector3().crossVectors(tangent, up).normalize();
+            const terrainY = getTerrainHeight(point.x, point.z);
+            const yPos = terrainY + 0.12;
+            const left = point.clone().add(right.clone().multiplyScalar(-pathWidth / 2));
+            const rightPt = point.clone().add(right.clone().multiplyScalar(pathWidth / 2));
+            left.y = yPos;
+            rightPt.y = yPos;
+            vertices.push(left.x, left.y, left.z);
+            vertices.push(rightPt.x, rightPt.y, rightPt.z);
+            normals.push(0, 1, 0, 0, 1, 0);
+            uvs.push(0, i / numSegments);
+            uvs.push(1, i / numSegments);
+        }
+        
+        for (let i = 0; i < samples.length - 1; i++) {
+            const idx = i * 2;
+            indices.push(idx, idx + 1, idx + 2);
+            indices.push(idx + 1, idx + 3, idx + 2);
+        }
+        
+        const pathGeometry = new THREE.BufferGeometry();
+        pathGeometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(vertices), 3));
+        pathGeometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(normals), 3));
+        pathGeometry.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uvs), 2));
+        pathGeometry.setIndex(indices);
+        pathGeometry.computeVertexNormals();
+        
+        // 创建小石子贴图
+        function createGravelTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            
+            // 基础土色
+            ctx.fillStyle = '#a08c7a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制大量小石子 (不规则形状)
+            for (let i = 0; i < 1200; i++) {
+                const x = Math.random() * canvas.width;
+                const y = Math.random() * canvas.height;
+                const radius = 3 + Math.random() * 8;
+                const gray = 80 + Math.random() * 60;
+                const color = `rgb(${gray + 20}, ${gray - 10}, ${gray - 20})`;
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                // 随机多边形模拟石子
+                const points = 5 + Math.floor(Math.random() * 4);
+                for (let j = 0; j < points; j++) {
+                    const angle = (j / points) * Math.PI * 2;
+                    const r = radius * (0.7 + Math.random() * 0.6);
+                    const px = x + Math.cos(angle) * r;
+                    const py = y + Math.sin(angle) * r;
+                    if (j === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                
+                // 添加一些高光小点
+                if (Math.random() > 0.7) {
+                    ctx.fillStyle = '#d4c4b4';
+                    ctx.beginPath();
+                    ctx.arc(x - 2, y - 2, 1.5, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+            
+            // 再叠加一些细小的沙粒感
+            ctx.fillStyle = '#8a7a6a';
+            for (let i = 0; i < 2000; i++) {
+                ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 2, 2);
+            }
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(1, 20);
+            return texture;
+        }
+        
+        const gravelTexture = createGravelTexture();
+        
+        const pathMat = new THREE.MeshStandardMaterial({
+            map: gravelTexture,
+            roughness: 0.9,
+            metalness: 0.0,
+            flatShading: true,
+            emissive: new THREE.Color(0x332211),
+            emissiveIntensity: 0.15
+        });
+        
+        const pathMesh = new THREE.Mesh(pathGeometry, pathMat);
+        pathMesh.receiveShadow = true;
+        pathMesh.castShadow = false;
+        scene.add(pathMesh);
+        
+        console.log('🪨 石子小径已铺设');
+        
+        // ========== 4. 对称巨柱 ==========
+        const startPoint = cameraCurve.getPoint(0);
+        const pillarRadius = 2.2;
+        const pillarHeight = 10.0;
+        const pillarOffsetX = 4.5;
+        const pillarOffsetZ = -6.5;
+        
+        const leftPillarX = startPoint.x - pillarOffsetX;
+        const leftPillarZ = startPoint.z + pillarOffsetZ;
+        const leftPillarY = getTerrainHeight(leftPillarX, leftPillarZ) + pillarHeight/2;
+        const leftPillarMat = new THREE.MeshStandardMaterial({ color: 0xeebb99, roughness: 0.6, flatShading: true });
+        const leftPillar = new THREE.Mesh(new THREE.CylinderGeometry(pillarRadius, pillarRadius, pillarHeight, 16), leftPillarMat);
+        leftPillar.position.set(leftPillarX, leftPillarY, leftPillarZ);
+        leftPillar.castShadow = true;
+        leftPillar.receiveShadow = true;
+        scene.add(leftPillar);
+        
+        const rightPillarX = startPoint.x + pillarOffsetX;
+        const rightPillarZ = startPoint.z + pillarOffsetZ;
+        const rightPillarY = getTerrainHeight(rightPillarX, rightPillarZ) + pillarHeight/2;
+        const rightPillarMat = new THREE.MeshStandardMaterial({ color: 0x99bbaa, roughness: 0.6, flatShading: true });
+        const rightPillar = new THREE.Mesh(new THREE.CylinderGeometry(pillarRadius, pillarRadius, pillarHeight, 16), rightPillarMat);
+        rightPillar.position.set(rightPillarX, rightPillarY, rightPillarZ);
+        rightPillar.castShadow = true;
+        rightPillar.receiveShadow = true;
+        scene.add(rightPillar);
+        
+        // ========== 5. 恐龙模型1 ==========
+        const model1Pos = { x: 9, z: 12 };
+        const model1TerrainY = getTerrainHeight(model1Pos.x, model1Pos.z);
+        const model1Y = model1TerrainY + 0.5;
+        
+        const loader1 = new FBXLoader();
+        const model1Url = './models/Allosaur/Stegosaurus.fbx';
+        let model1Loaded = false;
+        
+        loader1.load(model1Url, 
+            (fbx) => {
+                console.log('模型1加载成功');
+                model1Loaded = true;
+                const scale = 0.15;
+                fbx.scale.set(scale, scale, scale);
+                fbx.position.set(model1Pos.x, model1Y, model1Pos.z);
+                fbx.rotation.y = Math.PI / 6.2;
+                fbx.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        if (child.material) {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach(mat => {
+                                mat.color.setHex(0xccaa88);
+                                mat.roughness = 0.8;
+                                mat.metalness = 0.0;
+                                mat.flatShading = true;
+                                mat.needsUpdate = true;
+                            });
+                        }
+                    }
+                });
+                scene.add(fbx);
+                if (textSprite1) scene.remove(textSprite1);
+            },
+            undefined,
+            (error) => {
+                console.error('模型1加载失败:', error);
+                if (!model1Loaded) createFallbackText1();
+            }
+        );
+        
+        let textSprite1 = null;
+        function createFallbackText1() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ccaa88';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#2a3a4a';
+            ctx.font = 'Bold 48px "Microsoft YaHei"';
+            ctx.textAlign = 'center';
+            ctx.fillText('Stegosaurus 01', canvas.width/2, canvas.height/2);
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture });
+            textSprite1 = new THREE.Sprite(material);
+            textSprite1.scale.set(3, 3, 1);
+            textSprite1.position.set(model1Pos.x, model1Y + 1.5, model1Pos.z);
+            scene.add(textSprite1);
+        }
+        
+        // ========== 6. 第二个恐龙模型 ==========
+        const model2Pos = { x: -10, z: -17 };
+        const model2TerrainY = getTerrainHeight(model2Pos.x, model2Pos.z);
+        const model2Y = model2TerrainY + 0.5;
+        
+        const loader2 = new FBXLoader();
+        const model2Url = './models/Allosaur/Stegosaurus.fbx';
+        let model2Loaded = false;
+        
+        loader2.load(model2Url, 
+            (fbx) => {
+                console.log('模型2加载成功');
+                model2Loaded = true;
+                const scale = 0.2;
+                fbx.scale.set(scale, scale, scale);
+                fbx.position.set(model2Pos.x, model2Y, model2Pos.z);
+                fbx.rotation.y = -Math.PI / 1.25;
+                fbx.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        if (child.material) {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach(mat => {
+                                mat.color.setHex(0xaabb99);
+                                mat.roughness = 0.8;
+                                mat.metalness = 0.0;
+                                mat.flatShading = true;
+                                mat.needsUpdate = true;
+                            });
+                        }
+                    }
+                });
+                scene.add(fbx);
+                if (textSprite2) scene.remove(textSprite2);
+            },
+            undefined,
+            (error) => {
+                console.error('模型2加载失败:', error);
+                if (!model2Loaded) createFallbackText2();
+            }
+        );
+        
+        let textSprite2 = null;
+        function createFallbackText2() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#aabb99';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#2a3a4a';
+            ctx.font = 'Bold 48px "Microsoft YaHei"';
+            ctx.textAlign = 'center';
+            ctx.fillText('Stego-Run', canvas.width/2, canvas.height/2);
+            const texture = new THREE.CanvasTexture(canvas);
+            const material = new THREE.SpriteMaterial({ map: texture });
+            textSprite2 = new THREE.Sprite(material);
+            textSprite2.scale.set(3, 3, 1);
+            textSprite2.position.set(model2Pos.x, model2Y + 1.5, model2Pos.z);
+            scene.add(textSprite2);
+        }
+        
+        // ========== 7. 第三个长方体 ==========
+        const box3Pos = { x: 5.5, z: -30 };
+        const box3Mat = new THREE.MeshStandardMaterial({ color: 0x99aacc, roughness: 0.6, flatShading: true });
+        const box3 = new THREE.Mesh(new THREE.BoxGeometry(4.0, 4.0, 4.0), box3Mat);
+        const box3TerrainY = getTerrainHeight(box3Pos.x, box3Pos.z);
+        box3.position.set(box3Pos.x, box3TerrainY + 2.0, box3Pos.z);
+        box3.castShadow = true;
+        box3.receiveShadow = true;
+        scene.add(box3);
+        const box3BaseY = box3TerrainY + 2.0;
+        
+        // ========== 8. 路径小石头 (分布在道路两侧) ==========
+        const stoneMat = new THREE.MeshStandardMaterial({ color: 0xccbbaa, roughness: 0.9, flatShading: true });
+        const stoneCount = 40;
+        const stonePositions = [];
+        
+        function isOnPath(x, z) {
+            let minDist = Infinity;
+            for (let t = 0; t <= 1; t += 0.005) {
+                const pt = cameraCurve.getPoint(t);
+                const dx = pt.x - x;
+                const dz = pt.z - z;
+                const dist = Math.sqrt(dx*dx + dz*dz);
+                if (dist < minDist) minDist = dist;
+            }
+            return minDist < (pathWidth / 2 + 1.8);
+        }
+        
+        function isTooCloseToObjects(x, z, minDist = 3.5) {
+            if (Math.hypot(x - model1Pos.x, z - model1Pos.z) < minDist) return true;
+            if (Math.hypot(x - model2Pos.x, z - model2Pos.z) < minDist) return true;
+            if (Math.hypot(x - box3Pos.x, z - box3Pos.z) < minDist) return true;
+            return false;
+        }
+        
+        for (let i = 0; i < stoneCount; i++) {
+            let attempts = 0, placed = false;
+            while (attempts < 100 && !placed) {
+                const t = Math.random();
+                const pathPoint = cameraCurve.getPoint(t);
+                const tangent = cameraCurve.getTangent(t).normalize();
+                const right = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 1, 0)).normalize();
+                const side = Math.random() > 0.5 ? 1 : -1;
+                const offsetDist = 4.5 + Math.random() * 6.0;
+                const offsetVec = right.clone().multiplyScalar(offsetDist * side);
+                const alongOffset = (Math.random() - 0.5) * 4.0;
+                const forwardOffset = tangent.clone().multiplyScalar(alongOffset);
+                let posX = pathPoint.x + offsetVec.x + forwardOffset.x;
+                let posZ = pathPoint.z + offsetVec.z + forwardOffset.z;
+                
+                if (isOnPath(posX, posZ)) { attempts++; continue; }
+                let overlap = false;
+                for (let s of stonePositions) {
+                    if (Math.hypot(s.x - posX, s.z - posZ) < 2.2) { overlap = true; break; }
+                }
+                if (overlap) { attempts++; continue; }
+                if (isTooCloseToObjects(posX, posZ, 4.0)) { attempts++; continue; }
+                
+                const terrainY = getTerrainHeight(posX, posZ);
+                const stone = new THREE.Mesh(new THREE.DodecahedronGeometry(0.1), stoneMat.clone());
+                stone.scale.set(5.0, 3.5, 4.0);
+                stone.position.set(posX, terrainY + 0.15, posZ);
+                stone.rotation.y = Math.random() * Math.PI * 2;
+                stone.castShadow = true;
+                stone.receiveShadow = true;
+                scene.add(stone);
+                stonePositions.push({ x: posX, z: posZ });
+                placed = true;
+                attempts++;
+            }
+        }
+        console.log(`🪨 已放置 ${stonePositions.length} 块路边石头`);
+        
+        // ========== 9. 树木生成 (OBJ + 贴图) + 微风 + 阴影 ==========
+        const TREE_SCALE_FACTOR = 1.02;
+        
+        const exclusionZones = [
+            { x: model1Pos.x, z: model1Pos.z, radius: 5.0 },
+            { x: model2Pos.x, z: model2Pos.z, radius: 7.0 },
+            { x: box3Pos.x, z: box3Pos.z, radius: 6.0 }
+        ];
+        
+        function isInExclusionZone(x, z) {
+            for (let zone of exclusionZones) {
+                const dx = x - zone.x;
+                const dz = z - zone.z;
+                if (Math.sqrt(dx*dx + dz*dz) < zone.radius) return true;
+            }
+            return false;
+        }
+        
+        const treeCount = 70;
+        const distantTreeCount = 32;
+        const minDistFromPath = 6.0;
+        const maxDistFromPath = 10.0;
+        const minDistanceBetweenTrees = 6.0;
+        
+        const rng = (function() {
+            let seed = 2345;
+            return function() {
+                seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+                return seed / 0x7fffffff;
+            };
+        })();
+        const treePositions = [];
+        const treeInstances = [];
+        
+        function isOverlap(x, z, existing, minDist) {
+            for (let pos of existing) {
+                if (Math.hypot(pos.x - x, pos.z - z) < minDist) return true;
+            }
+            return false;
+        }
+        
+        const texturePath = './textures/tree_Base_color.png';
+        const objPath = './models/stylize-tree-lowpoly/tree.obj';
+        const mtlPath = './models/stylize-tree-lowpoly/tree.mtl';
+        
+        let treeTemplate = null;
+        let treeTexture = null;
+        
+        const textureLoader = new THREE.TextureLoader();
+        textureLoader.load(texturePath,
+            (tex) => {
+                console.log('✅ 树木贴图加载成功');
+                treeTexture = tex;
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                loadTreeModel();
+            },
+            undefined,
+            (err) => console.error('❌ 树木贴图加载失败:', err)
+        );
+        
+        function loadTreeModel() {
+            const mtlLoader = new MTLLoader();
+            mtlLoader.load(mtlPath,
+                (materials) => {
+                    materials.preload();
+                    const objLoader = new OBJLoader();
+                    objLoader.setMaterials(materials);
+                    objLoader.load(objPath, processTreeModel, undefined, () => loadObjWithoutMtl());
+                },
+                undefined,
+                () => loadObjWithoutMtl()
+            );
+        }
+        
+        function loadObjWithoutMtl() {
+            const objLoader = new OBJLoader();
+            objLoader.load(objPath, (obj) => {
+                obj.traverse(child => {
+                    if (child.isMesh) {
+                        child.material = new THREE.MeshStandardMaterial({
+                            map: treeTexture,
+                            roughness: 0.7,
+                            flatShading: true
+                        });
+                    }
+                });
+                processTreeModel(obj);
+            }, undefined, (err) => console.error('❌ OBJ加载失败:', err));
+        }
+        
+        function processTreeModel(model) {
+            treeTemplate = model;
+            treeTemplate.traverse(child => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    if (child.material) {
+                        const mats = Array.isArray(child.material) ? child.material : [child.material];
+                        mats.forEach(mat => {
+                            if (treeTexture) mat.map = treeTexture;
+                            mat.flatShading = true;
+                            mat.roughness = 0.7;
+                            mat.needsUpdate = true;
+                        });
+                    }
+                }
+            });
+            generateTreesFromTemplate();
+        }
+        
+        function generateTreesFromTemplate() {
+            if (!treeTemplate) return;
+            
+            for (let i = 0; i < treeCount; i++) {
+                let attempts = 0, posX, posZ, placed = false;
+                while (attempts < 40 && !placed) {
+                    const t = rng();
+                    const pathPoint = cameraCurve.getPoint(t);
+                    const tangent = cameraCurve.getTangent(t).normalize();
+                    const right = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 1, 0)).normalize();
+                    const side = rng() > 0.5 ? 1 : -1;
+                    const offsetDist = minDistFromPath + rng() * (maxDistFromPath - minDistFromPath);
+                    const offsetVec = right.clone().multiplyScalar(offsetDist * side);
+                    posX = pathPoint.x + offsetVec.x;
+                    posZ = pathPoint.z + offsetVec.z;
+                    posX += (rng() - 0.5) * 5.0 * tangent.x;
+                    posZ += (rng() - 0.5) * 5.0 * tangent.z;
+                    if (!isOverlap(posX, posZ, treePositions, minDistanceBetweenTrees) && !isInExclusionZone(posX, posZ)) placed = true;
+                    attempts++;
+                }
+                if (placed) {
+                    let baseScale = 0.8 + rng() * 0.8;
+                    const scale = baseScale * TREE_SCALE_FACTOR;
+                    const inst = treeTemplate.clone();
+                    inst.scale.set(scale, scale, scale);
+                    inst.rotation.y = rng() * Math.PI * 2;
+                    inst.position.set(posX, getTerrainHeight(posX, posZ), posZ);
+                    inst.traverse(child => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }});
+                    scene.add(inst);
+                    treePositions.push({ x: posX, z: posZ });
+                    treeInstances.push({
+                        obj: inst,
+                        baseRotY: inst.rotation.y,
+                        speed: 0.25 + rng() * 0.25,
+                        phase: rng() * Math.PI * 2,
+                        amp: 0.005 + rng() * 0.015
+                    });
+                }
+            }
+            
+            for (let i = 0; i < distantTreeCount; i++) {
+                let attempts = 0, posX, posZ, placed = false;
+                while (attempts < 90 && !placed) {
+                    const t = rng();
+                    const pathPoint = cameraCurve.getPoint(t);
+                    const tangent = cameraCurve.getTangent(t).normalize();
+                    const right = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 1, 0)).normalize();
+                    const side = rng() > 0.5 ? 1 : -1;
+                    const offsetDist = 10.5 + rng() * 5;
+                    const offsetVec = right.clone().multiplyScalar(offsetDist * side);
+                    posX = pathPoint.x + offsetVec.x;
+                    posZ = pathPoint.z + offsetVec.z;
+                    posX += (rng() - 0.5) * 6.0 * tangent.x;
+                    posZ += (rng() - 0.5) * 6.0 * tangent.z;
+                    if (!isOverlap(posX, posZ, treePositions, minDistanceBetweenTrees) && !isInExclusionZone(posX, posZ)) placed = true;
+                    attempts++;
+                }
+                if (placed) {
+                    let baseScale = 1.9 + rng() * 6.0;
+                    const scale = baseScale * TREE_SCALE_FACTOR;
+                    const inst = treeTemplate.clone();
+                    inst.scale.set(scale, scale, scale);
+                    inst.rotation.y = rng() * Math.PI * 0.5;
+                    inst.position.set(posX, getTerrainHeight(posX, posZ), posZ);
+                    inst.traverse(child => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; }});
+                    scene.add(inst);
+                    treePositions.push({ x: posX, z: posZ });
+                    treeInstances.push({
+                        obj: inst,
+                        baseRotY: inst.rotation.y,
+                        speed: 0.02 + rng() * 0.03,
+                        phase: rng() * Math.PI * 3,
+                        amp: 0.05 + rng() * 0.015
+                    });
+                }
+            }
+            console.log(`🌳 已放置 ${treePositions.length} 棵树木`);
+        }
+        
+        // ========== 10. 粒子系统 ==========
+        const particleCount = 800;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+        const particleColors = new Float32Array(particleCount * 3);
+        
+        for (let i = 0; i < particleCount; i++) {
+            const t = Math.random();
+            const pathPoint = cameraCurve.getPoint(t);
+            const tangent = cameraCurve.getTangent(t).normalize();
+            const right = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 1, 0)).normalize();
+            
+            const side = Math.random() > 0.5 ? 1 : -1;
+            const offsetDist = 8 + Math.random() * 25;
+            const offsetVec = right.clone().multiplyScalar(offsetDist * side);
+            const alongOffset = (Math.random() - 0.5) * 20;
+            const forwardOffset = tangent.clone().multiplyScalar(alongOffset);
+            
+            let posX = pathPoint.x + offsetVec.x + forwardOffset.x;
+            let posZ = pathPoint.z + offsetVec.z + forwardOffset.z;
+            const terrainY = getTerrainHeight(posX, posZ);
+            const posY = terrainY + 2.5 + Math.random() * 12;
+            
+            particlePositions[i*3] = posX;
+            particlePositions[i*3+1] = posY;
+            particlePositions[i*3+2] = posZ;
+            
+            const color = new THREE.Color().setHSL(0.08 + Math.random()*0.1, 0.8, 0.5 + Math.random()*0.3);
+            particleColors[i*3] = color.r;
+            particleColors[i*3+1] = color.g;
+            particleColors[i*3+2] = color.b;
+        }
+        
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+        
+        const particleMat = new THREE.PointsMaterial({
+            size: 0.18,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.7,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false
+        });
+        
+        const particles = new THREE.Points(particleGeo, particleMat);
+        scene.add(particles);
+        
+        const particleInitialY = [];
+        for (let i = 0; i < particleCount; i++) {
+            particleInitialY.push(particlePositions[i*3+1]);
+        }
+        
+        // ========== 11. 植物点缀 (GLB模型) ==========
+        const plantLoader = new GLTFLoader();
+        const plantUrl = '.\\models\\Flower\\stylized_plant_3.glb';
+        let plantTemplate = null;
+        const plantPositions = [];
+        const plantMixers = [];
+        
+        function isTooCloseToAny(x, z, minDist = 3.5) {
+            if (Math.hypot(x - model1Pos.x, z - model1Pos.z) < 4.5) return true;
+            if (Math.hypot(x - model2Pos.x, z - model2Pos.z) < 4.5) return true;
+            if (Math.hypot(x - box3Pos.x, z - box3Pos.z) < 4.5) return true;
+            for (let s of stonePositions) {
+                if (Math.hypot(x - s.x, z - s.z) < 2.8) return true;
+            }
+            for (let t of treePositions) {
+                if (Math.hypot(x - t.x, z - t.z) < 3.5) return true;
+            }
+            for (let p of plantPositions) {
+                if (Math.hypot(x - p.x, z - p.z) < 3.0) return true;
+            }
+            if (isOnPath(x, z)) return true;
+            return false;
+        }
+        
+        plantLoader.load(plantUrl, (gltf) => {
+            console.log('✅ 植物模型加载成功');
+            plantTemplate = gltf.scene;
+            
+            const box = new THREE.Box3().setFromObject(plantTemplate);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            const bottomOffset = center.y - size.y / 2;
+            
+            plantTemplate.traverse(child => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                    if (child.material) {
+                        const mats = Array.isArray(child.material) ? child.material : [child.material];
+                        mats.forEach(mat => {
+                            mat.roughness = 0.8;
+                            mat.metalness = 0.0;
+                            mat.needsUpdate = true;
+                        });
+                    }
+                }
+            });
+            
+            const mixer = new THREE.AnimationMixer(plantTemplate);
+            if (gltf.animations && gltf.animations.length) {
+                gltf.animations.forEach(clip => mixer.clipAction(clip).play());
+            }
+            
+            const plantCount = 25;
+            for (let i = 0; i < plantCount; i++) {
+                let attempts = 0, posX, posZ, placed = false;
+                while (attempts < 80 && !placed) {
+                    const t = rng();
+                    const pathPoint = cameraCurve.getPoint(t);
+                    const tangent = cameraCurve.getTangent(t).normalize();
+                    const right = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 1, 0)).normalize();
+                    const side = rng() > 0.5 ? 1 : -1;
+                    const offsetDist = 5.5 + rng() * 8.0;
+                    const offsetVec = right.clone().multiplyScalar(offsetDist * side);
+                    const alongOffset = (rng() - 0.5) * 5.0;
+                    const forwardOffset = tangent.clone().multiplyScalar(alongOffset);
+                    posX = pathPoint.x + offsetVec.x + forwardOffset.x;
+                    posZ = pathPoint.z + offsetVec.z + forwardOffset.z;
+                    
+                    if (!isTooCloseToAny(posX, posZ, 3.5)) placed = true;
+                    attempts++;
+                }
+                if (placed) {
+                    const inst = plantTemplate.clone();
+                    const scale = 0.04 + rng() * 0.5;
+                    inst.scale.set(scale, scale, scale);
+                    inst.rotation.y = rng() * Math.PI * 2;
+                    const terrainY = getTerrainHeight(posX, posZ);
+                    inst.position.set(posX, terrainY - bottomOffset - 2, posZ);
+                    scene.add(inst);
+                    plantPositions.push({ x: posX, z: posZ });
+                    
+                    const instMixer = new THREE.AnimationMixer(inst);
+                    if (gltf.animations && gltf.animations.length) {
+                        gltf.animations.forEach(clip => instMixer.clipAction(clip).play());
+                    }
+                    plantMixers.push(instMixer);
+                }
+            }
+            console.log(`🌿 已放置 ${plantPositions.length} 株植物`);
+        }, undefined, (err) => {
+            console.error('❌ 植物模型加载失败:', err);
+        });
+        
+        // ========== 光照 ==========
+        const ambient = new THREE.AmbientLight(0xf4bf73, 0.55);
+        scene.add(ambient);
+        
+        const sunLight = new THREE.DirectionalLight(0xf0b870, 1.5);
+        sunLight.position.set(35, 30, 45);
+        sunLight.castShadow = true;
+        sunLight.receiveShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        const d = 60;
+        sunLight.shadow.camera.left = -d;
+        sunLight.shadow.camera.right = d;
+        sunLight.shadow.camera.top = d;
+        sunLight.shadow.camera.bottom = -d;
+        sunLight.shadow.camera.near = 1;
+        sunLight.shadow.camera.far = 150;
+        sunLight.shadow.bias = -0.0005;
+        scene.add(sunLight);
+        
+        const backLight = new THREE.DirectionalLight(0xaaccff, 0.6);
+        backLight.position.set(-25, 15, -50);
+        scene.add(backLight);
+        
+        const fillLight = new THREE.PointLight(0xffaa88, 0.4);
+        fillLight.position.set(0, 20, 10);
+        scene.add(fillLight);
+        
+        // ========== 滚轮控制 ==========
+        let currentProgress = 0.0;
+        let targetProgress = 0.0;
+        const wheelStep = 0.01;
+        const smoothFactor = 0.05;
+        
+        window.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            targetProgress += (e.deltaY > 0) ? wheelStep : -wheelStep;
+            targetProgress = Math.min(1.0, Math.max(0.0, targetProgress));
+        }, { passive: false });
+        
+        const keyframes = [
+            { p: 0.0, yaw: 0, pitch: 0 },
+            { p: 0.25, yaw: -90, pitch: 0 },
+            { p: 0.5, yaw: 100, pitch: 10 },
+            { p: 0.75, yaw: 25, pitch: 10 },
+            { p: 1.0, yaw: 0, pitch: 35 }
+        ];
+        
+        function getLookAngles(progress) {
+            for (let i = 0; i < keyframes.length - 1; i++) {
+                if (progress >= keyframes[i].p && progress <= keyframes[i+1].p) {
+                    const t = (progress - keyframes[i].p) / (keyframes[i+1].p - keyframes[i].p);
+                    return {
+                        yaw: keyframes[i].yaw + (keyframes[i+1].yaw - keyframes[i].yaw) * t,
+                        pitch: keyframes[i].pitch + (keyframes[i+1].pitch - keyframes[i].pitch) * t
+                    };
+                }
+            }
+            return { yaw: keyframes[0].yaw, pitch: keyframes[0].pitch };
+        }
+        
+        function updateCamera(progress) {
+            let pos = cameraCurve.getPoint(progress);
+            pos.y = Math.max(pos.y, getTerrainHeight(pos.x, pos.z) + 0.5);
+            camera.position.copy(pos);
+            const tangent = cameraCurve.getTangent(progress).normalize();
+            const { yaw, pitch } = getLookAngles(progress);
+            const right = new THREE.Vector3().crossVectors(tangent, new THREE.Vector3(0, 1, 0)).normalize();
+            const up = new THREE.Vector3().crossVectors(right, tangent).normalize();
+            const dir = tangent.clone().applyQuaternion(new THREE.Quaternion().setFromAxisAngle(up, yaw * Math.PI/180))
+                                      .applyQuaternion(new THREE.Quaternion().setFromAxisAngle(right, pitch * Math.PI/180));
+            camera.lookAt(pos.clone().add(dir.multiplyScalar(15)));
+        }
+        
+        updateCamera(currentProgress);
+        
+        // ========== 动画循环 ==========
+        const clock = new THREE.Clock();
+        let time = 0;
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            currentProgress += (targetProgress - currentProgress) * smoothFactor;
+            time += delta;
+            
+            box3.position.y = box3BaseY + Math.sin(time * 0.9) * 0.12;
+            
+            treeInstances.forEach(item => {
+                const obj = item.obj;
+                const swing = Math.sin(time * item.speed + item.phase) * item.amp;
+                obj.rotation.z = swing;
+                obj.rotation.x = swing * 0.5;
+                obj.rotation.y = item.baseRotY + swing * 0.2;
+            });
+            
+            const positions = particles.geometry.attributes.position.array;
+            for (let i = 0; i < particleCount; i++) {
+                const idx = i*3+1;
+                const baseY = particleInitialY[i];
+                positions[idx] = baseY + Math.sin(time * 0.8 + i) * 0.4;
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+            
+            plantMixers.forEach(mixer => mixer.update(delta));
+            
+            updateCamera(currentProgress);
+            composer.render();
+        }
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        console.log('🎨 石子小径 · 植物点缀 · 渐变天空 · 阴影 · 双恐龙');
+    </script>
+</body>
+</html>
