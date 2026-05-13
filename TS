@@ -11,23 +11,6 @@
             font-family: 'Segoe UI', 'Poppins', 'Microsoft YaHei', sans-serif;
             background-color: #1a2a3a;
         }
-        .info-tip {
-            position: absolute;
-            bottom: 18px;
-            left: 18px;
-            color: #efe6d8;
-            background: rgba(20, 30, 25, 0.5);
-            padding: 6px 16px;
-            border-radius: 40px;
-            backdrop-filter: blur(6px);
-            font-size: 14px;
-            border-left: 4px solid #d9b382;
-            pointer-events: none;
-            z-index: 100;
-            font-weight: 400;
-            letter-spacing: 0.5px;
-        }
-         /* 开始画面中央大字样式 */
         .title-overlay {
             position: fixed;
             top: 0;
@@ -37,13 +20,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: transparent; /* 完全透明背景，仅显示文字 */
-            pointer-events: none; /* 让点击穿透到canvas */
+            background-color: transparent;
+            pointer-events: none;
             z-index: 200;
             transition: opacity 1.5s ease-out;
         }
         .title-text {
-            font-size: 20vh;      /* 占据屏幕高度的 1/5 左右，20vh 约 1/5 */
+            font-size: 20vh;
             font-weight: bold;
             color: white;
             text-shadow: 0 0 20px rgba(0,0,0,0.5), 0 0 8px rgba(0,0,0,0.3);
@@ -61,62 +44,99 @@
             20% { opacity: 1; transform: scale(1.02); text-shadow: 0 0 20px rgba(255,255,200,0.8); }
             100% { opacity: 1; transform: scale(1); text-shadow: 0 0 30px rgba(0,0,0,0.6); }
         }
-    /* 新增气泡样式 */
-        .end-bubble {
+        .acrylic-overlay {
             position: fixed;
-            bottom: 72%;
-            left: 45%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(12px);
-            color: #fff7e8;
-            padding: 12px 28px;
-            border-radius: 60px;
-            font-size: 1.8rem;
-            font-weight: bold;
-            font-family: 'Poppins', 'Segoe UI', sans-serif;
-            letter-spacing: 2px;
-            text-align: center;
-            white-space: nowrap;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3), 0 0 0 2px rgba(255,215,150,0.6);
-            z-index: 300;
-            animation: bubbleFadeIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 15;
             pointer-events: none;
+            display: none;
         }
-        .end-bubble::after {
-            content: '';
-            position: absolute;
-            bottom: -16px;
+         /* 新增音乐控制按钮样式 */
+        .music-control {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 300;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(20, 30, 25, 0.6);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(217, 179, 130, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #efe6d8;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            pointer-events: auto;
+            user-select: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .music-control:hover {
+            background: rgba(217, 179, 130, 0.35);
+            border-color: #f0c080;
+            transform: scale(1.08);
+        }
+        .music-control:active {
+            transform: scale(0.95);
+        }
+        .hint-bubble {
+            position: fixed;
+            z-index: 250;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            background: rgba(74, 74, 74, 0.5);
+            backdrop-filter: blur(6px);
+            color: #efe6d8;
+            padding: 8px 22px;
+            border-radius: 40px;
+            font-size: 24px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            transform: translate(-50%, -120%)translateX(-10px);
+            border: 2px solid rgba(0, 0, 0, 0.5);
+        }
+        .operate-hint {
+            position: fixed;
+            z-index: 250;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            background: rgba(20, 30, 25, 0.7);
+            backdrop-filter: blur(6px);
+            color: #efe6d8;
+            padding: 6px 18px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            border: 1px solid rgba(217, 179, 130, 0.5);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        #operateHintLeft {
+            bottom: 40px;
             left: 50%;
-            transform: translateX(-50%);
-            border-width: 16px 16px 0 16px;
-            border-style: solid;
-            border-color: rgba(0, 0, 0, 0.8) transparent transparent transparent;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+            transform: translateX(-120%);
         }
-        @keyframes bubbleFadeIn {
-            0% {
-                opacity: 0;
-                transform: translateX(-50%) translateY(30px) scale(0.8);
-            }
-            100% {
-                opacity: 1;
-                transform: translateX(-50%) translateY(0) scale(1);
-            }
-        }
-        .bubble-fade-out {
-            animation: bubbleFadeOut 0.6s ease forwards;
-        }
-        @keyframes bubbleFadeOut {
-            0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(20px) scale(0.8); visibility: hidden; }
+        #operateHintRight {
+            bottom: 40px;
+            right: 50%;
+            transform: translateX(120%);
         }
     </style>
 </head>
 <body>
-    <div class="info-tip">✨ 翼龙转向180°飞行 · 滚轮漫游 · 棘龙在0.85处等待</div>
-
-    <!-- 开始画面中央 Dinosaur 白色大字 -->
+    <div id="musicToggle" class="music-control" title="音乐开关">🕩</div>
     <div id="startTitle" class="title-overlay">
         <div class="title-text">DINOSAUR</div>
     </div>
@@ -124,16 +144,20 @@
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
     </script>
-
+    <canvas id="cubeCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:20;"></canvas>
+    <div id="acrylicOverlay" class="acrylic-overlay"></div>
+    <div id="spinoHint" class="hint-bubble">看看我的篮子里面有什么</div>
+    <div id="operateHintLeft" class="operate-hint">左键拖拽旋转</div>
+    <div id="operateHintRight" class="operate-hint">右键点击退出</div>
     <script type="module">
         import * as THREE from 'three';
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-        import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
         import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
         import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         // --- 初始化场景 ---
         const scene = new THREE.Scene();
@@ -159,11 +183,60 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(window.devicePixelRatio);
+        // 主画布置于最底层
+        renderer.domElement.style.position = 'fixed';
+        renderer.domElement.style.top = '0';
+        renderer.domElement.style.left = '0';
+        renderer.domElement.style.zIndex = '10';
+
+        // 立方体专用渲染器（透明背景）
+        const cubeCanvas = document.getElementById('cubeCanvas');
+        const cubeRenderer = new THREE.WebGLRenderer({
+            canvas: cubeCanvas,      // 直接绑定到已有 canvas
+            antialias: true,
+            alpha: true,             // 透明背景
+            premultipliedAlpha: false
+        });
+        cubeRenderer.setSize(window.innerWidth, window.innerHeight);
+        cubeRenderer.setPixelRatio(window.devicePixelRatio);
+        cubeRenderer.autoClear = false;     // 保留之前帧的透明背景（避免闪烁）
+        const cubeScene = new THREE.Scene();
+        cubeScene.background = null;        // 透明场景，必须设 null
+        // 为立方体场景添加光照，使卡通材质正常显示
+cubeScene.add(new THREE.AmbientLight(0xffffff, 0.4));
+const cubeLight = new THREE.DirectionalLight(0xffffff, 0.5);
+cubeLight.position.set(1, 1, 1);
+cubeScene.add(cubeLight);
+
+        // 立方体查看器的独立相机
+const cubeCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 200);
+cubeCamera.position.set(0, 0, 6);
+const cubeControls = new OrbitControls(cubeCamera, cubeRenderer.domElement);
+cubeControls.target.set(0, 0, 0);
+cubeControls.enableDamping = true;
+cubeControls.dampingFactor = 0.08;
+cubeControls.rotateSpeed = 0.8;
+cubeControls.zoomSpeed = 1.2;
+cubeControls.minDistance = 2.5;
+cubeControls.maxDistance = 15;
+cubeControls.maxPolarAngle = Math.PI * 0.8;
+cubeControls.minPolarAngle = 0.2;
+cubeControls.enablePan = false;
+cubeControls.mouseButtons = {
+    LEFT: THREE.MOUSE.ROTATE,
+    MIDDLE: THREE.MOUSE.DOLLY,
+    RIGHT: null
+};
+cubeControls.touches = {
+    ONE: THREE.TOUCH.ROTATE,
+    TWO: THREE.TOUCH.DOLLY_PAN
+};
+cubeControls.enabled = false; // 初始禁用，模型出现时才开启
+
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(renderer.domElement);
 
-        // 黑色外轮廓描边
         const composer = new EffectComposer(renderer);
         const renderPass = new RenderPass(scene, camera);
         composer.addPass(renderPass);
@@ -290,8 +363,8 @@
             new THREE.Vector3(2, 2.0, 12), new THREE.Vector3(4, 3.0, 8),
             new THREE.Vector3(2, 4.0, 4), new THREE.Vector3(-1, 4.5, 0),
             new THREE.Vector3(-4, 4.0, -4), new THREE.Vector3(-3, 3.0, -8),
-            new THREE.Vector3(0, 2.0, -12), new THREE.Vector3(4, 1.0, -16),
-            new THREE.Vector3(3, 0.0, -20), new THREE.Vector3(-1, -0.5, -24),
+            new THREE.Vector3(0, 2.0, -12), new THREE.Vector3(4, 2.0, -16),
+            new THREE.Vector3(3, 2.0, -20), new THREE.Vector3(-1, 0.5, -24),
             new THREE.Vector3(-4, -0.2, -28), new THREE.Vector3(-2, 0.5, -32),
             new THREE.Vector3(2, 1.8, -36), new THREE.Vector3(5, 1.5, -40),
             new THREE.Vector3(3, 1.8, -44),
@@ -427,11 +500,12 @@
         // 【修复】提前定义 keyframes 和 getLookAngles，避免棘龙加载时未定义
         // ═══════════════════════════════════════════════════════════════
         const keyframes = [
-            { p: 0.0, yaw: 0, pitch: 5 },
+             { p: 0.0, yaw: 0, pitch: 5 },
             { p: 0.05, yaw: 30, pitch: 10 },
             { p: 0.25, yaw: -90, pitch: 0 },
             { p: 0.5, yaw: 100, pitch: 10 },
-            { p: 0.75, yaw: -75, pitch: 25 },
+            { p: 0.55, yaw: 80, pitch: 20 },
+            { p: 0.75, yaw: -75, pitch: 15 },
             { p: 0.85, yaw: 110, pitch: 0 },
             { p: 0.90, yaw: 100, pitch: 0 },
             { p: 1.0, yaw: 0, pitch: 0 }
@@ -637,75 +711,234 @@
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         let isHoveringTrex = false;
-
+        let isHoveringSpino = false;   // 【新增】棘龙悬停状态
+        let isHoveringProto = false;   // protoceratops 悬停状态
+        let isHoveringLeael = false;   // leaellynasaura 悬停状态
+        let spinosaurusModel = null;
+        let spinoPosition = null;
+        let spinoHintTimer = null;
+        let spinCube = null;
+        let hasSeenSpinoModel = false;   // 新增：是否曾查看过棘龙模型
+        let isDraggingCube = false;
+        let isCubeLoading = false;
+        
         window.addEventListener('mousemove', (event) => {
-            mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-            mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-            if (trexModel) {
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObject(trexModel, true);
-                isHoveringTrex = intersects.length > 0;
-            }
-        });
+    mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+    mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
 
-        window.addEventListener('click', () => {
-            if (isHoveringTrex) {
-                sessionStorage.setItem('sceneProgress', currentProgress);
-                window.location.href = 'https://j-jjp.github.io/bury-dragon/';
-            }
-        });
+    if (trexModel) {
+         raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObject(trexModel, true);
+    isHoveringTrex = intersects.length > 0;
+    // 悬停时播放恐龙叫声
+    if (isHoveringTrex && roarReady && !roarAudio.isPlaying) {
+        roarAudio.play();
+    }
+}
 
-        // ========== 6. 第二个恐龙模型 (protoceratops) 调亮贴图并播放动画 ==========
-const model2Pos = { x: -10, z: -17 };
-const model2TerrainY = getTerrainHeight(model2Pos.x, model2Pos.z);
-const model2Y = model2TerrainY + 0.5;
 
-const loader2 = new GLTFLoader();
-const model2Url = './models/Allosaur/protoceratops.glb';
-
-loader2.load(model2Url,
-    (gltf) => {
-        console.log('🦕 protoceratops 加载成功（贴图已调亮，动画正常播放）');
-        const model = gltf.scene;
-        const scale = 2.5;
-        model.scale.set(scale, scale, scale);
-        model.position.set(model2Pos.x, model2Y, model2Pos.z);
-        model.rotation.y = Math.PI / 2.1;
-        
-        // 遍历模型，调整材质亮度
-        model.traverse(child => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-                if (child.material) {
-                    const materials = Array.isArray(child.material) ? child.material : [child.material];
-                    materials.forEach(mat => {
-                        // 保留原始贴图颜色，通过 emissive 提亮整体
-                        // 不修改 color 为白色，以免过度改变原有色调
-                        mat.emissive = new THREE.Color(0xffffff);
-                        mat.emissiveIntensity = 0.1;      // 调亮强度（可调整 0.3~0.8）
-                        mat.roughness = 0.8;               // 降低粗糙度，增强反射
-                        mat.metalness = 0.0;
-                        mat.flatShading = true;
-                        mat.needsUpdate = true;
-                    });
-                }
-            }
-        });
-        
-        scene.add(model);
-
-        // 播放动画（必须保留此段代码）
-        if (gltf.animations && gltf.animations.length) {
-            const mixer = new THREE.AnimationMixer(model);
-            gltf.animations.forEach(clip => mixer.clipAction(clip).play());
-            if (!window.customMixers) window.customMixers = [];
-            window.customMixers.push(mixer);
+    if (spinosaurusModel) {
+        raycaster.setFromCamera(mouse, camera);
+        const spinoIntersects = raycaster.intersectObject(spinosaurusModel, true);
+        isHoveringSpino = spinoIntersects.length > 0;
+    }
+    // protoceratops 悬停检测
+    if (window.protoModel) {
+        raycaster.setFromCamera(mouse, camera);
+        const protoIntersects = raycaster.intersectObject(window.protoModel, true);
+        isHoveringProto = protoIntersects.length > 0;
+        // 悬停时播放音效
+        if (isHoveringProto && protoAudioReady && !protoAudio.isPlaying) {
+            protoAudio.play();
         }
-    },
-    undefined,
-    (error) => console.error('protoceratops 模型加载失败:', error)
-);
+    }
+
+    // leaellynasaura 悬停检测
+    if (window.leaelModel) {
+        raycaster.setFromCamera(mouse, camera);
+        const leaelIntersects = raycaster.intersectObject(window.leaelModel, true);
+        isHoveringLeael = leaelIntersects.length > 0;
+        // 悬停时播放音效
+        if (isHoveringLeael && leaelAudioReady && !leaelAudio.isPlaying) {
+            leaelAudio.play();
+        }
+    }
+});
+window.addEventListener('click', () => {
+    if (isDraggingCube) return;
+
+    // 左键点击棘龙：出现可旋转立方体（如果立方体尚未存在）
+    if (isHoveringSpino && !spinCube && !isCubeLoading) {
+        // 标记加载中
+        isCubeLoading = true;
+        const modelLoader = new GLTFLoader();
+        const modelUrl = './models/Allosaur/dinosaur_egg__baby_t-rex.glb';
+        modelLoader.load(modelUrl,
+            (gltf) => {
+                const model = gltf.scene;
+                // 调整模型大小和初始朝向
+                model.scale.set(7.0, 7.0, 7.0);   // 根据实际调整
+                model.rotation.y = Math.PI;        // 让模型正面面向“镜头”
+                model.traverse(child => {
+                   if (child.isMesh) {
+        child.castShadow = false;
+        child.receiveShadow = false;
+        child.frustumCulled = false;
+
+        if (child.material) {
+            // 使用卡通风格材质，移除原始贴图
+            const oldMat = child.material;
+            const newMat = new THREE.MeshToonMaterial({
+                color: 0xffdd99,                      // 恐龙蛋暖色，可自行调整
+                // gradientMap: ... 如果需要更精细的卡通渐变可传入，此处省略使用默认
+                transparent: oldMat.transparent || false,
+                opacity: oldMat.opacity || 1,
+                side: oldMat.side || THREE.FrontSide,
+            });
+            child.material = newMat;
+             // 添加黑色描边轮廓（Sketchfab 风格）
+           const outlineMat = new THREE.MeshBasicMaterial({
+                color: 0x000000,
+                side: THREE.BackSide,
+                depthWrite: false,
+                polygonOffset: true,
+                polygonOffsetFactor: 1,
+                polygonOffsetUnits: 1
+            });
+            const outline = new THREE.Mesh(child.geometry, outlineMat);
+            // 复制局部变换，并向外放大 4%
+            outline.position.copy(child.position);
+            outline.rotation.copy(child.rotation);
+            outline.scale.copy(child.scale).multiplyScalar(1.04);
+            child.parent.add(outline);   // 加入相同的父级，跟随模型移动
+        }
+
+    }
+});
+                
+                // 模型固定在 cubeScene 原点
+                model.position.set(0, 0, 0);
+                model.quaternion.identity();
+
+                spinCube = model;
+                hasSeenSpinoModel = true;        // 新增：标记已看过模型
+                cubeScene.add(spinCube);
+
+                // 设置控制器参数
+                cubeControls.target.set(0, 0, 0);
+                cubeControls.enabled = true;
+                // 相机初始位置：正对模型，距离6
+                cubeCamera.position.set(0, 0, 6);
+                cubeCamera.lookAt(0, 0, 0);
+
+                document.getElementById('acrylicOverlay').style.display = 'block';
+                document.getElementById('operateHintLeft').style.opacity = '1';
+                document.getElementById('operateHintRight').style.opacity = '1';
+                spinoHintTimer = null; 
+                targetProgress = LOCK_PROGRESS;
+                isCubeLoading = false;
+            },
+            undefined,
+            (error) => {
+                console.error('❌ 棘龙点击模型加载失败:', error);
+                isCubeLoading = false;
+            }
+        );
+        return;
+    }
+    // 原有霸王龙跳转逻辑
+    if (isHoveringTrex) {
+        // 直接延迟跳转，叫声已在悬停时触发
+    setTimeout(() => {
+        sessionStorage.setItem('sceneProgress', currentProgress);
+        window.location.href = 'https://911932517.github.io/22.github.io/';
+    }, 1500);   // 可保留原 roarAudio.buffer 判断，或用固定时长
+}
+});
+
+// 右键生成/移除立方体（带调试日志，测试后可按需删除日志）
+window.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    if (spinCube) {
+        cubeScene.remove(spinCube);
+        spinCube = null;
+        spinoHintTimer = null;   // 新增：重置气泡计时器
+        isDraggingCube = false;
+        isCubeLoading = false;
+        cubeControls.enabled = false;
+        document.getElementById('acrylicOverlay').style.display = 'none';
+        document.getElementById('operateHintLeft').style.opacity = '0';
+        document.getElementById('operateHintRight').style.opacity = '0';
+    }
+});
+
+window.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || !spinCube) return;
+    isDraggingCube = true;
+    e.stopPropagation();
+});
+
+window.addEventListener('mouseup', (e) => {
+    if (e.button === 0) isDraggingCube = false;
+});
+        // ========== 6. 第二个恐龙模型 (protoceratops) 调亮贴图并播放动画 ==========
+        const model2Pos = { x: -10, z: -17 };
+        const model2TerrainY = getTerrainHeight(model2Pos.x, model2Pos.z);
+        const model2Y = model2TerrainY + 0.5;
+
+        const loader2 = new GLTFLoader();
+        const model2Url = './models/Allosaur/protoceratops.glb';
+
+        loader2.load(model2Url,
+            (gltf) => {
+                console.log('🦕 protoceratops 加载成功（贴图已调亮，动画正常播放）');
+                const model = gltf.scene;
+                window.protoModel = model;
+                const scale = 2.5;
+                model.scale.set(scale, scale, scale);
+                model.position.set(model2Pos.x, model2Y, model2Pos.z);
+                model.rotation.y = Math.PI / 2.1;
+                
+                model.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        if (child.material) {
+                            const materials = Array.isArray(child.material) ? child.material : [child.material];
+                            materials.forEach(mat => {
+                                mat.emissive = new THREE.Color(0xffffff);
+                                mat.emissiveIntensity = 0.1;
+                                mat.roughness = 0.8;
+                                mat.metalness = 0.0;
+                                mat.flatShading = true;
+                                mat.needsUpdate = true;
+                            });
+                        }
+                    }
+                });
+                
+                scene.add(model);
+                // 收集 protoceratops 材质用于悬停高亮
+                const protoMaterials = [];
+                model.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        const mats = Array.isArray(child.material) ? child.material : [child.material];
+                        mats.forEach(mat => protoMaterials.push(mat));
+                    }
+                });
+                window.protoMaterials = protoMaterials;
+
+                if (gltf.animations && gltf.animations.length) {
+                    const mixer = new THREE.AnimationMixer(model);
+                    gltf.animations.forEach(clip => mixer.clipAction(clip).play());
+                    if (!window.customMixers) window.customMixers = [];
+                    window.customMixers.push(mixer);
+                }
+            },
+            
+            undefined,
+            (error) => console.error('protoceratops 模型加载失败:', error)
+        );
 
         // ═══════════════════ 翼龙模型 ═══════════════════
         let pteranodonModel = null;
@@ -767,6 +1000,7 @@ loader2.load(model2Url,
         model3Loader.load(model3Url,
             (gltf) => {
                 const model = gltf.scene;
+                window.leaelModel = model;
                 const terrainY = getTerrainHeight(model3Pos.x, model3Pos.z);
                 model.position.set(model3Pos.x, terrainY + 0.0, model3Pos.z);
                 const scale = 29.0;
@@ -788,6 +1022,15 @@ loader2.load(model2Url,
                     }
                 });
                 scene.add(model);
+                // 收集 leaellynasaura 材质用于悬停高亮
+                const leaelMaterials = [];
+                model.traverse(child => {
+                    if (child.isMesh && child.material) {
+                        const mats = Array.isArray(child.material) ? child.material : [child.material];
+                        mats.forEach(mat => leaelMaterials.push(mat));
+                    }
+                });
+                window.leaelMaterials = leaelMaterials;
                 if (gltf.animations && gltf.animations.length) {
                     const mixer = new THREE.AnimationMixer(model);
                     gltf.animations.forEach(clip => mixer.clipAction(clip).play());
@@ -1188,7 +1431,11 @@ loader2.load(model2Url,
             });
             const mixer = new THREE.AnimationMixer(plantTemplate);
             if (gltf.animations && gltf.animations.length) {
-                gltf.animations.forEach(clip => mixer.clipAction(clip).play());
+                gltf.animations.forEach(clip => {
+                    const action = mixer.clipAction(clip);
+                    action.setEffectiveTimeScale(0.3);
+                    action.play();
+                });
             }
             const plantCount = 25;
             for (let i = 0; i < plantCount; i++) {
@@ -1219,9 +1466,14 @@ loader2.load(model2Url,
                     plantPositions.push({ x: posX, z: posZ });
                     const instMixer = new THREE.AnimationMixer(inst);
                     if (gltf.animations && gltf.animations.length) {
-                        gltf.animations.forEach(clip => instMixer.clipAction(clip).play());
+                        gltf.animations.forEach(clip => {
+                            const action = instMixer.clipAction(clip);
+                            action.setEffectiveTimeScale(0.3);
+                            action.play();
+                        });
                     }
                     plantMixers.push(instMixer);
+
                 }
             }
             console.log(`🌿 已放置 ${plantPositions.length} 株植物`);
@@ -1457,7 +1709,7 @@ loader2.load(model2Url,
                 const heightOffset = 1.0 + Math.random() * 2.0;
                 instance.position.copy(pos);
                 instance.position.y += heightOffset;
-                if (isModel) instance.rotation.y = Math.atan2(tangent.x, tangent.z);
+                if (isModel) instance.rotation.y = Math.atan2(tangent.x, tangent.z) + Math.PI;
                 let mixer = null;
                 if (isModel && gltf.animations && gltf.animations.length) {
                     mixer = new THREE.AnimationMixer(instance);
@@ -1496,7 +1748,7 @@ loader2.load(model2Url,
                     }
                 }
             });
-            const coconutCount = 15;
+            const coconutCount = 20;
             for (let i = 0; i < coconutCount; i++) {
                 let attempts = 0, posX, posZ, placed = false;
                 while (attempts < 150 && !placed) {
@@ -1622,7 +1874,7 @@ loader2.load(model2Url,
             placeOnEdge('z', -bX, -bZ, bZ, 18);
         }, undefined, (error) => console.error('❌ 高山石头模型加载失败:', error));
 
-        // ═══════════════════ 棘龙模型 ═══════════════════
+        // ═══════════════════ 棘龙模型 + 悬停黑色动态描边 ═══════════════════
         const spinoProgress = 0.85;
         const spinoPathPoint = cameraCurve.getPoint(spinoProgress);
         const spinoTangent = cameraCurve.getTangent(spinoProgress).normalize();
@@ -1633,13 +1885,14 @@ loader2.load(model2Url,
             .applyQuaternion(new THREE.Quaternion().setFromAxisAngle(spinoUpDir, spinoYaw * Math.PI/180))
             .applyQuaternion(new THREE.Quaternion().setFromAxisAngle(spinoRight, spinoPitch * Math.PI/180));
         const spinoDistance = 7.6;
-        const spinoPosition = spinoPathPoint.clone().add(spinoLookDir.clone().multiplyScalar(spinoDistance));
+        spinoPosition = spinoPathPoint.clone().add(spinoLookDir.clone().multiplyScalar(spinoDistance));
         spinoPosition.y = getTerrainHeight(spinoPosition.x, spinoPosition.z);
         const spinosaurusLoader = new GLTFLoader();
         const spinosaurusUrl = './models/Allosaur/spinosaurus_dinosaur.glb';
         let spinosaurusMixer = null;
         spinosaurusLoader.load(spinosaurusUrl, (gltf) => {
             const model = gltf.scene;
+            spinosaurusModel = model;
             model.scale.set(220, 220, 220);
             const box = new THREE.Box3().setFromObject(model);
             const size = box.getSize(new THREE.Vector3());
@@ -1658,32 +1911,87 @@ loader2.load(model2Url,
                 }
             });
             scene.add(model);
+            model.updateMatrixWorld(); 
+
+             // ---- 收集棘龙材质用于悬停高亮 ----
+            const spinoMaterials = [];
+            model.traverse(child => {
+                if (child.isMesh && child.material) {
+                    const mats = Array.isArray(child.material) ? child.material : [child.material];
+                    mats.forEach(mat => spinoMaterials.push(mat));
+                }
+            });
+            // 将收集的材质数组存入全局变量，供动画循环使用
+            window.spinoMaterials = spinoMaterials;
+
             if (gltf.animations && gltf.animations.length) {
                 spinosaurusMixer = new THREE.AnimationMixer(model);
                 spinosaurusMixer.clipAction(gltf.animations[0]).play();
             }
+
+            // 加载并放置额外恐龙 dinosaur.glb
+            const extraDinoLoader = new GLTFLoader();
+            const extraDinoUrl = './models/Allosaur/dinosaur.glb';
+            extraDinoLoader.load(extraDinoUrl, (gltf2) => {
+                console.log('🦕 额外恐龙 (dinosaur.glb) 加载成功，放置在棘龙左侧');
+                const dino = gltf2.scene;
+                const dinoScale = 1.0;
+                dino.scale.set(dinoScale, dinoScale, dinoScale);
+                
+                const spinoRightV = new THREE.Vector3().crossVectors(spinoLookDir, new THREE.Vector3(0, 1, 0)).normalize();
+                const leftDir = spinoRightV.clone().negate();
+                const leftOffset = -4.0;
+                const dinoPos = spinoPosition.clone().add(leftDir.multiplyScalar(leftOffset));
+                dinoPos.y = getTerrainHeight(dinoPos.x, dinoPos.z);
+                
+                dino.position.copy(dinoPos);
+                dino.rotation.y = -Math.atan2(spinoLookDir.x, spinoLookDir.z);
+                
+                dino.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        if (child.material) {
+                            const mats = Array.isArray(child.material) ? child.material : [child.material];
+                            mats.forEach(mat => {
+                                mat.flatShading = true;
+                                mat.roughness = 0.7;
+                                mat.metalness = 0.0;
+                                mat.needsUpdate = true;
+                            });
+                        }
+                    }
+                });
+                scene.add(dino);
+                
+                if (gltf2.animations && gltf2.animations.length) {
+                    const dinoMixer = new THREE.AnimationMixer(dino);
+                    gltf2.animations.forEach(clip => dinoMixer.clipAction(clip).play());
+                    if (!window.customMixers) window.customMixers = [];
+                    window.customMixers.push(dinoMixer);
+                    console.log('🎬 额外恐龙动画已激活');
+                } else {
+                    console.warn('额外恐龙模型没有动画');
+                }
+            }, undefined, (error) => console.error('❌ 额外恐龙模型加载失败:', error));
         }, undefined, (error) => console.error('❌ 棘龙模型加载失败:', error));
 
-        // ═══════════════════ 🕊️ 新导入：bird_orange.glb ═══════════════════
-        // 模型坐标：放置在初始相机前方、洞穴内部地面上
+        // ═══════════════════ 🕊️ 橙色鸟模型 (bird_orange.glb) ═══════════════════
         const birdPos = {
-            x: centerModelPos.x + 2,      // 0
-            z: centerModelPos.z + 12       // 33
+            x: centerModelPos.x + 2,
+            z: centerModelPos.z + 12
         };
         const birdTerrainY = getTerrainHeight(birdPos.x, birdPos.z);
-        const birdY = birdTerrainY + 0.9;   // 紧贴地面
-
+        const birdY = birdTerrainY + 0.9;
         const birdLoader = new GLTFLoader();
         const birdUrl = './models/Allosaur/bird_orange.glb';
         birdLoader.load(birdUrl,
             (gltf) => {
                 console.log('🕊️ 橙色鸟模型加载成功');
                 const bird = gltf.scene;
-                // 缩放根据实际模型大小调整（此处预设为 1.0，可后续微调）
                 const birdScale = 0.5;
                 bird.scale.set(birdScale, birdScale, birdScale);
                 bird.position.set(birdPos.x, birdY, birdPos.z);
-                // 面向路径前方（z负方向）
                 bird.rotation.y = -Math.PI / 3.2;
                 bird.traverse(child => {
                     if (child.isMesh) {
@@ -1701,8 +2009,6 @@ loader2.load(model2Url,
                     }
                 });
                 scene.add(bird);
-
-                // 播放动画
                 if (gltf.animations && gltf.animations.length) {
                     const birdMixer = new THREE.AnimationMixer(bird);
                     gltf.animations.forEach(clip => birdMixer.clipAction(clip).play());
@@ -1714,7 +2020,55 @@ loader2.load(model2Url,
             undefined,
             (error) => console.error('❌ 橙色鸟模型加载失败:', error)
         );
-        // 鸟模型坐标注释：x = 0, y = 根据地形计算, z = 33 （初始相机前方17米，洞穴中心）
+
+        // ═══════════════════ 🦅 飞行鸟群模型 (birds.glb) - 盘旋运动 ═══════════════════
+        const birdsLoader = new GLTFLoader();
+        const birdsUrl = './models/Allosaur/birds.glb';
+        let birdsModel = null;
+        let birdsMixer = null;
+        let circleCenter = null;
+        const circleRadius = 9;
+        let flyAngle = 0;
+        const flySpeed = 0.4;
+
+        birdsLoader.load(birdsUrl,
+            (gltf) => {
+                console.log('🦅 birds.glb 飞行鸟群加载成功，开始在0.45处盘旋');
+                birdsModel = gltf.scene;
+                const scale = 2.15;
+                birdsModel.scale.set(scale, scale, scale);
+
+                circleCenter = cameraCurve.getPoint(0.45);
+                circleCenter.y = getTerrainHeight(circleCenter.x, circleCenter.z) + 18;
+
+                birdsModel.position.copy(circleCenter);
+                birdsModel.traverse(child => {
+                    if (child.isMesh) {
+                        child.castShadow = true;
+                        child.receiveShadow = true;
+                        if (child.material) {
+                            const mats = Array.isArray(child.material) ? child.material : [child.material];
+                            mats.forEach(mat => {
+                                mat.flatShading = true;
+                                mat.roughness = 0.8;
+                                mat.metalness = 0.0;
+                                mat.needsUpdate = true;
+                            });
+                        }
+                    }
+                });
+                scene.add(birdsModel);
+
+                if (gltf.animations && gltf.animations.length) {
+                    birdsMixer = new THREE.AnimationMixer(birdsModel);
+                    gltf.animations.forEach(clip => birdsMixer.clipAction(clip).play());
+                    if (!window.customMixers) window.customMixers = [];
+                    window.customMixers.push(birdsMixer);
+                }
+            },
+            undefined,
+            (error) => console.error('❌ birds.glb 飞行鸟群加载失败:', error)
+        );
 
         // ========== 光照 ==========
         const ambient = new THREE.AmbientLight(0xf4bf73, 0.65);
@@ -1741,7 +2095,7 @@ loader2.load(model2Url,
         fillLight.position.set(0, 20, 10);
         scene.add(fillLight);
 
-        // 丁达尔光束 (保留)
+        // 丁达尔光束
         const godRayLength = 60;
         const godRayRadiusTop = 2.2;
         const godRayRadiusBottom = 9.5;
@@ -1802,6 +2156,104 @@ loader2.load(model2Url,
         godRayMesh.applyQuaternion(quat);
         scene.add(godRayMesh);
 
+        // ═══════════════════ 🎵 背景音乐 ═══════════════════
+        const listener = new THREE.AudioListener();
+        camera.add(listener);
+
+        const bgmAudio = new THREE.Audio(listener);
+        const audioLoader = new THREE.AudioLoader();
+
+        audioLoader.load(
+            './audio/bgm.mp3',
+            (buffer) => {
+                bgmAudio.setBuffer(buffer);
+                bgmAudio.setLoop(true);
+                bgmAudio.setVolume(0.5);
+                bgmAudio.autoplay = true;
+                if (listener.context.state === 'suspended') {
+                    listener.context.resume().then(() => {
+                        bgmAudio.play();
+                    });
+                } else {
+                    bgmAudio.play();
+                }
+                console.log('🎵 背景音乐已开始播放');
+            },
+            undefined,
+            (error) => console.error('❌ 背景音乐加载失败:', error)
+        );
+        // ═══════════════════ 🦖 恐龙叫声音效 ═══════════════════
+        const roarAudio = new THREE.Audio(listener);
+        const roarLoader = new THREE.AudioLoader();
+        let roarReady = false;
+        // protoceratops 悬停音效
+        const protoAudio = new THREE.Audio(listener);
+        const protoAudioLoader = new THREE.AudioLoader();
+        let protoAudioReady = false;
+        // leaellynasaura 悬停音效
+        const leaelAudio = new THREE.Audio(listener);
+        const leaelAudioLoader = new THREE.AudioLoader();
+        let leaelAudioReady = false;
+
+
+        roarLoader.load(
+            './audio/roar.mp3',
+            (buffer) => {
+                roarAudio.setBuffer(buffer);
+                roarAudio.setVolume(1.2);
+                roarReady = true;
+                console.log('🦖 恐龙叫声加载成功');
+            },
+            undefined,
+            (error) => console.error('❌ 恐龙叫声加载失败:', error)
+        );
+         // 加载 protoceratops 悬停音效
+        protoAudioLoader.load(
+            './audio/two.mp3',            // 请根据实际路径调整
+            (buffer) => {
+                protoAudio.setBuffer(buffer);
+                protoAudio.setVolume(0.7);   // 音量可调
+                protoAudioReady = true;
+                console.log('🔊 protoceratops 悬停音效加载成功');
+            },
+            undefined,
+            (error) => console.error('❌ protoceratops 音效加载失败:', error)
+        );
+
+        // 加载 leaellynasaura 悬停音效
+        leaelAudioLoader.load(
+            './audio/three.mp3',          // 请根据实际路径调整
+            (buffer) => {
+                leaelAudio.setBuffer(buffer);
+                leaelAudio.setVolume(0.6);
+                leaelAudioReady = true;
+                console.log('🔊 leaellynasaura 悬停音效加载成功');
+            },
+            undefined,
+            (error) => console.error('❌ leaellynasaura 音效加载失败:', error)
+        );
+// ═══════════════════ 🎵 音乐控制按钮 ═══════════════════
+        const musicToggleBtn = document.getElementById('musicToggle');
+    
+        musicToggleBtn.addEventListener('click', () => {
+            // 若音频对象或缓冲区尚未就绪，不执行任何操作
+            if (!bgmAudio || !bgmAudio.buffer) return;
+            
+             if (bgmAudio.isPlaying) {
+                bgmAudio.pause();
+                musicToggleBtn.textContent = '🕨';      // 播放图标（黑色扁平）
+                musicToggleBtn.title = '播放音乐';
+            } else {
+                bgmAudio.play();
+                musicToggleBtn.textContent = '🕩';      // 暂停图标（两条竖线）
+                musicToggleBtn.title = '暂停音乐';
+            }
+        });
+
+        // 初始化状态：音频加载完成后自动为播放，按钮显示🎵
+        // 如果自动播放被浏览器阻止，可监听 context 状态恢复
+        // 此处保留简单逻辑
+        console.log('🎛️ 音乐控制按钮已就绪');
         // ========== 滚轮控制 ==========
         let currentProgress = 0.0;
         let targetProgress = 0.0;
@@ -1816,58 +2268,15 @@ loader2.load(model2Url,
 
         const wheelStep = 0.01;
         const smoothFactor = 0.05;
-
-        /* ───── 🔒 核心修改：到达棘龙位置(0.85)后锁定滚轮 ───── */
-        const LOCK_PROGRESS = 0.85; // 与棘龙出现进度一致
-
-        // 标题淡出标志，防止多次触发
-        let titleFaded = false;
-        function fadeOutTitle() {
-            if (titleFaded) return;
-            titleFaded = true;
-            const titleDiv = document.getElementById('startTitle');
-            if (titleDiv) {
-                titleDiv.style.opacity = '0';
-                setTimeout(() => {
-                    if (titleDiv && titleDiv.parentNode) titleDiv.parentNode.removeChild(titleDiv);
-                }, 1500);
-            }
-        }
-        // 如果是跳转返回（已有保存的进度），则直接移除开始画面大字，不再显示
-        if (savedProgress !== null) {
-            const titleDiv = document.getElementById('startTitle');
-            if (titleDiv) titleDiv.remove();
-        }
+        const LOCK_PROGRESS = 0.85;
 
         window.addEventListener('wheel', (e) => {
             e.preventDefault();
-            
-            // 首次滚动时，淡出开始界面大字
-            fadeOutTitle();
-            
-            // 1. 如果当前进度已经到达或超过锁定点，完全忽略滚轮
-            if (currentProgress >= LOCK_PROGRESS) return;
-            
-            // 2. 正常处理滚轮，但限制目标上限为锁定点（防止越过）
-            targetProgress += (e.deltaY > 0) ? wheelStep : -wheelStep;
-            targetProgress = Math.min(LOCK_PROGRESS, Math.max(0.0, targetProgress));
+        // 原路径移动逻辑
+        if (currentProgress >= LOCK_PROGRESS) return;
+        targetProgress += (e.deltaY > 0) ? wheelStep : -wheelStep;
+        targetProgress = Math.min(LOCK_PROGRESS, Math.max(0.0, targetProgress));
         }, { passive: false });
-            // ========== 新增气泡提示功能 ==========
-        let bubbleShown = false;
-        function showEndBubble() {
-            if (bubbleShown) return;
-            bubbleShown = true;
-            const bubbleDiv = document.createElement('div');
-            bubbleDiv.className = 'end-bubble';
-            bubbleDiv.textContent = '结束';
-            document.body.appendChild(bubbleDiv);
-            setTimeout(() => {
-                bubbleDiv.classList.add('bubble-fade-out');
-                setTimeout(() => {
-                    if (bubbleDiv && bubbleDiv.parentNode) bubbleDiv.parentNode.removeChild(bubbleDiv);
-                }, 600);
-            }, 3000);
-        }
 
         function updateCamera(progress) {
             let pos = cameraCurve.getPoint(progress);
@@ -1961,15 +2370,30 @@ loader2.load(model2Url,
                     b.mesh.position.y += b.height;
                     if (b.isModel) {
                         const tangent = cameraCurve.getTangent(b.progress).normalize();
-                        b.mesh.rotation.y = Math.atan2(tangent.x, tangent.z);
+                        b.mesh.rotation.y = Math.atan2(tangent.x, tangent.z) + Math.PI;
                         if (b.mixer) b.mixer.update(delta);
                     }
                 }
             });
 
+            // 鸟群盘旋运动
+            if (birdsModel && circleCenter) {
+                flyAngle += delta * flySpeed;
+                flyAngle %= (Math.PI * 2);
+
+                const posX = circleCenter.x + circleRadius * Math.cos(flyAngle);
+                const posZ = circleCenter.z + circleRadius * Math.sin(flyAngle);
+                birdsModel.position.set(posX, circleCenter.y, posZ);
+
+                const tanX = -Math.sin(flyAngle);
+                const tanZ =  Math.cos(flyAngle);
+                birdsModel.rotation.y = Math.atan2(tanX, tanZ) + Math.PI;
+            }
+
+            // 霸王龙悬停高亮
             if (trexMaterials.length > 0) {
                 const targetEmissive = isHoveringTrex ? new THREE.Color(0xffffff) : new THREE.Color(0x000000);
-                const targetIntensity = isHoveringTrex ? 0.8 : 0.0;
+                const targetIntensity = isHoveringTrex ? 0.4 : 0.0;
                 trexMaterials.forEach(mat => {
                     if (!mat.emissive) mat.emissive = new THREE.Color(0x000000);
                     mat.emissive.copy(targetEmissive);
@@ -1977,12 +2401,95 @@ loader2.load(model2Url,
                 });
             }
 
-            updateCamera(currentProgress);
-            composer.render();
-            // 新增：检测到达棘龙位置（0.85）且未弹出气泡
-            if (!bubbleShown && currentProgress >= LOCK_PROGRESS - 0.001) {
-                showEndBubble();
+            // 棘龙悬停高亮（与霸王龙相同）
+            if (window.spinoMaterials && window.spinoMaterials.length > 0) {
+                const shouldHighlight = isHoveringSpino && !spinCube;
+                const targetEmissiveSpino = shouldHighlight ? new THREE.Color(0xffffff) : new THREE.Color(0x000000);
+                const targetIntensitySpino = shouldHighlight ? 0.4 : 0.0;
+                window.spinoMaterials.forEach(mat => {
+                    if (!mat.emissive) mat.emissive = new THREE.Color(0x000000);
+                    mat.emissive.copy(targetEmissiveSpino);
+                    mat.emissiveIntensity = targetIntensitySpino;
+                 });
             }
+            // protoceratops 悬停高亮
+            if (window.protoMaterials && window.protoMaterials.length > 0) {
+                const targetEmissive = isHoveringProto ? new THREE.Color(0xffffff) : new THREE.Color(0x000000);
+                const targetIntensity = isHoveringProto ? 0.4 : 0.0;
+                window.protoMaterials.forEach(mat => {
+                    if (!mat.emissive) mat.emissive = new THREE.Color(0x000000);
+                    mat.emissive.copy(targetEmissive);
+                    mat.emissiveIntensity = targetIntensity;
+                });
+            }
+
+            // leaellynasaura 悬停高亮
+            if (window.leaelMaterials && window.leaelMaterials.length > 0) {
+                const targetEmissive = isHoveringLeael ? new THREE.Color(0xffffff) : new THREE.Color(0x000000);
+                const targetIntensity = isHoveringLeael ? 0.4 : 0.0;
+                window.leaelMaterials.forEach(mat => {
+                    if (!mat.emissive) mat.emissive = new THREE.Color(0x000000);
+                    mat.emissive.copy(targetEmissive);
+                    mat.emissiveIntensity = targetIntensity;
+                });
+            }
+
+            // 标题透明度：进度0时完全显示，进度达到0.06时完全透明
+            const titleEl = document.getElementById('startTitle');
+            if (titleEl) {
+                const fadeThreshold = 0.04;
+                const opacity = Math.max(0, 1 - currentProgress / fadeThreshold);
+                titleEl.style.opacity = opacity;
+            }
+
+            // 如果模型存在，固定主视角 + 独立更新控制器
+            if (spinCube) {
+                updateCamera(LOCK_PROGRESS);      // 主视角锁死在棘龙处
+                cubeControls.update();             // 更新独立控制器
+            } else {
+                updateCamera(currentProgress);
+            }
+            // ---- 棘龙头顶提示 UI（仅显示 3 秒） ----
+            const hintEl = document.getElementById('spinoHint');
+            if (hintEl && spinoPosition) {
+                const nearSpino = Math.abs(currentProgress - 0.85) < 0.03;
+                if (nearSpino && !spinCube && !hasSeenSpinoModel) {
+                    const hintWorldPos = spinoPosition.clone().add(new THREE.Vector3(0, 6.5, 0));
+                    const screenPos = hintWorldPos.clone().project(camera);
+                    if (screenPos.z > 0 && screenPos.z < 1) {
+                        const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                        const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+                        hintEl.style.left = x + 'px';
+                        hintEl.style.top = y + 'px';
+
+                        // 还没有计时器？显示并开始 3 秒计时
+                        if (!spinoHintTimer) {
+                            hintEl.style.opacity = '1';
+                            spinoHintTimer = setTimeout(() => {
+                                hintEl.style.opacity = '0';
+                                // 标记为已显示完成，不再重复弹出
+                                spinoHintTimer = 'done';
+                            }, 2000);
+                        }
+                        // 如果计时器已完成或正在进行中，什么也不做
+                    } else {
+                        // 在屏幕外直接隐藏，但不重置计时器状态
+                        hintEl.style.opacity = '0';
+                    }
+                } else {
+                    // 离开棘龙范围或模型已出现 → 隐藏并彻底重置计时器
+                    if (spinoHintTimer) {
+                        if (spinoHintTimer !== 'done') clearTimeout(spinoHintTimer);
+                        spinoHintTimer = null;
+                    }
+                    hintEl.style.opacity = '0';
+                }
+            }
+            // 1. 渲染主场景（使用主相机）
+            composer.render();
+              // 2. 渲染立方体场景（使用 cubeCamera）
+            cubeRenderer.clear();
+            cubeRenderer.render(cubeScene, cubeCamera);
         }
 
         animate();
@@ -1990,18 +2497,14 @@ loader2.load(model2Url,
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
+            cubeCamera.aspect = window.innerWidth / window.innerHeight;
+            cubeCamera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+            cubeRenderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
         });
-         // 开始画面的淡出: 5秒后自动消失（如果用户一直没有滚动）
-        if (document.getElementById('startTitle')) {
-            setTimeout(() => {
-                fadeOutTitle();
-            }, 5000);
-        }
 
-
-        console.log('🎨 场景已启动，包含橙色鸟模型在洞穴中央');
+        console.log('🎨 场景已启动，飞行鸟群沿高空路径循环');
     </script>
 </body>
 </html>
