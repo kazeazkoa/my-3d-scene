@@ -2133,6 +2133,21 @@ let targetProgress = 0.0;
 // 恢复进度（从 sessionStorage）
 const savedProgress = sessionStorage.getItem('sceneProgress');
 if (savedProgress !== null) {
+// 仅当是从其他站点跳转回来时才视为“外部返回”
+    const isFromExternal = document.referrer && !document.referrer.includes(window.location.origin);
+    if (isFromExternal) {
+        returnedFromExternal = true;
+        suppressPopupsOnReturn = true;
+        // ... 标题浮现等设置
+    } else {
+        // 刷新或同站内跳转：直接恢复进度，不抑制弹窗
+        returnedFromExternal = false;
+        suppressPopupsOnReturn = false;
+        const titleEl = document.getElementById('startTitle');
+        if (titleEl) titleEl.style.display = 'none';
+        // 不显示标题，立即启用滚轮
+        isWheelEnabled = true;
+    }
     const val = parseFloat(savedProgress);
     if (!isNaN(val)) {
         currentProgress = val;
