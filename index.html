@@ -2133,55 +2133,53 @@ let targetProgress = 0.0;
 // 恢复进度（从 sessionStorage）
 const savedProgress = sessionStorage.getItem('sceneProgress');
 if (savedProgress !== null) {
-// 仅当是从其他站点跳转回来时才视为“外部返回”
-    const isFromExternal = document.referrer && !document.referrer.includes(window.location.origin);
-    if (isFromExternal) {
-        returnedFromExternal = true;
-        suppressPopupsOnReturn = true;
-        // ... 标题浮现等设置
-    } else {
-        // 刷新或同站内跳转：直接恢复进度，不抑制弹窗
-        returnedFromExternal = false;
-        suppressPopupsOnReturn = false;
-        const titleEl = document.getElementById('startTitle');
-        if (titleEl) titleEl.style.display = 'none';
-        // 不显示标题，立即启用滚轮
-        isWheelEnabled = true;
-    }
     const val = parseFloat(savedProgress);
     if (!isNaN(val)) {
         currentProgress = val;
         targetProgress = val;
     }
+
+    // 判断是否是刷新（重载）行为
+    const navEntry = performance.getEntriesByType("navigation")[0];
+    const isReload = navEntry && navEntry.type === 'reload';
+
+    if (!isReload) {
+        // 不是刷新：视为从外部返回 → 抑制弹窗，标题浮现
+        returnedFromExternal = true;
+        suppressPopupsOnReturn = true;
+        const titleEl = document.getElementById('startTitle');
+        if (titleEl) {
+            titleEl.style.display = 'flex';
+            titleEl.style.opacity = '0';
+        }
+        const enterBtn = document.getElementById('enterBtn');
+        if (enterBtn) enterBtn.style.display = 'none';
+        isWheelEnabled = true;
+
+        // 将已越过的进度点标记为“已弹出”，避免滚动后误弹
+        if (currentProgress >= 0.29 && !popup7501Shown) popup7501Shown = true;
+        if (currentProgress >= 0.52 && !popup7506Shown) popup7506Shown = true;
+        if (currentProgress >= 0.72 && !popup7503Shown) popup7503Shown = true;
+    } else {
+        // 刷新页面：恢复正常进入（无标题，允许弹窗）
+        returnedFromExternal = false;
+        suppressPopupsOnReturn = false;
+        const titleEl = document.getElementById('startTitle');
+        if (titleEl) titleEl.style.display = 'none';
+        const enterBtn = document.getElementById('enterBtn');
+        if (enterBtn) enterBtn.style.display = 'none';
+        isWheelEnabled = true;
+    }
 }
-// 恢复 0.29 弹出状态
+// 恢复各弹出状态（保持不变）
 if (sessionStorage.getItem('popup7501Shown') === 'true') {
     popup7501Shown = true;
 }
-// 恢复 0.50 弹出状态
 if (sessionStorage.getItem('popup7506Shown') === 'true') {
     popup7506Shown = true;
 }
-// 恢复 0.70 弹出状态
 if (sessionStorage.getItem('popup7503Shown') === 'true') {
     popup7503Shown = true;
-}
-// 从外部返回：先隐藏标题，隐藏 ENTER，启用滚轮；标题将在滚回起点时浮现
-if (savedProgress !== null) {
-    returnedFromExternal = true;                 // ★ 标记从外部返回
-    suppressPopupsOnReturn = true;
-    const titleEl = document.getElementById('startTitle');
-    if (titleEl) {
-        titleEl.style.display = 'flex';         // 保持布局
-        titleEl.style.opacity = '0';            // 初始完全透明
-    }
-    const enterBtn = document.getElementById('enterBtn');
-    if (enterBtn) enterBtn.style.display = 'none';
-    isWheelEnabled = true;
-    // ★ 外部返回时，将已越过的进度点标记为“已弹出”，避免滚动后误弹
-    if (currentProgress >= 0.29 && !popup7501Shown) popup7501Shown = true;
-    if (currentProgress >= 0.52 && !popup7506Shown) popup7506Shown = true;
-    if (currentProgress >= 0.72 && !popup7503Shown) popup7503Shown = true;
 }
 
 const wheelStep = 0.01;
