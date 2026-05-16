@@ -825,6 +825,7 @@
         let popup7501Shown = false;   // 进度0.70弹出是否已触发
         let isWheelEnabled = false; 
         let returnedFromExternal = false; // ★ 从外部返回标志，用于控制标题浮现
+        let suppressPopupsOnReturn = false; // ★ 从外部返回时禁止所有弹出
         // ========== 6. 第二个恐龙模型 (protoceratops) ==========
         const model2Pos = { x: -10, z: -17 };
         const model2TerrainY = getTerrainHeight(model2Pos.x, model2Pos.z);
@@ -2074,13 +2075,13 @@ roarLoader7506.load('./audio/two.mp3', (buffer) => {
     roarReady7506 = true;
 });
 // ★ 进度 0.70 吼叫音频
-const roarAudio7501 = new THREE.Audio(listener);
-const roarLoader7501 = new THREE.AudioLoader();
-let roarReady7501 = false;
-roarLoader7501.load('./audio/three.mp3', (buffer) => {
-    roarAudio7501.setBuffer(buffer);
-    roarAudio7501.setVolume(1.2);
-    roarReady7501 = true;
+const roarAudio7503 = new THREE.Audio(listener);
+const roarLoader7503 = new THREE.AudioLoader();
+let roarReady7503 = false;
+roarLoader7503.load('./audio/three.mp3', (buffer) => {
+    roarAudio7503.setBuffer(buffer);
+    roarAudio7503.setVolume(1.2);
+    roarReady7503 = true;
 });
 
         const musicToggleBtn = document.getElementById('musicToggle');
@@ -2117,7 +2118,7 @@ if (enterBtn) {
                 targetProgress = 0;
                 updateCamera(0);
                 isWheelEnabled = true;
-                popup7503Shown = false;   // 重置进度0.15弹出状态
+                popup7501Shown = false;   // 重置进度0.15弹出状态
             }, 1000);
         } else {
             isWheelEnabled = true;
@@ -2138,17 +2139,22 @@ if (savedProgress !== null) {
         targetProgress = val;
     }
 }
-// 恢复弹出状态
-if (sessionStorage.getItem('popup7503Shown') === 'true') {
-    popup7503Shown = true;
+// 恢复 0.29 弹出状态
+if (sessionStorage.getItem('popup7501Shown') === 'true') {
+    popup7501Shown = true;
 }
-// ★ 恢复 0.50 弹出状态
+// 恢复 0.50 弹出状态
 if (sessionStorage.getItem('popup7506Shown') === 'true') {
     popup7506Shown = true;
+}
+// 恢复 0.70 弹出状态
+if (sessionStorage.getItem('popup7503Shown') === 'true') {
+    popup7503Shown = true;
 }
 // 从外部返回：先隐藏标题，隐藏 ENTER，启用滚轮；标题将在滚回起点时浮现
 if (savedProgress !== null) {
     returnedFromExternal = true;                 // ★ 标记从外部返回
+    suppressPopupsOnReturn = true;
     const titleEl = document.getElementById('startTitle');
     if (titleEl) {
         titleEl.style.display = 'flex';         // 保持布局
@@ -2157,6 +2163,10 @@ if (savedProgress !== null) {
     const enterBtn = document.getElementById('enterBtn');
     if (enterBtn) enterBtn.style.display = 'none';
     isWheelEnabled = true;
+    // ★ 外部返回时，将已越过的进度点标记为“已弹出”，避免滚动后误弹
+    if (currentProgress >= 0.29 && !popup7501Shown) popup7501Shown = true;
+    if (currentProgress >= 0.52 && !popup7506Shown) popup7506Shown = true;
+    if (currentProgress >= 0.72 && !popup7503Shown) popup7503Shown = true;
 }
 
 const wheelStep = 0.01;
@@ -2166,6 +2176,9 @@ const LOCK_PROGRESS = 0.85;
             e.preventDefault();
             if (!isWheelEnabled) return;  
             if (currentProgress >= LOCK_PROGRESS) return;
+            // ★ 用户开始滚动后，恢复正常的弹出逻辑
+            if (suppressPopupsOnReturn) suppressPopupsOnReturn = false;
+            targetProgress += (e.deltaY > 0) ? wheelStep : -wheelStep;
             targetProgress += (e.deltaY > 0) ? wheelStep : -wheelStep;
             targetProgress = Math.min(LOCK_PROGRESS, Math.max(0.0, targetProgress));
         }, { passive: false });
@@ -2317,68 +2330,97 @@ if (titleEl) {
                     }
                 }
             }
-           // 进度0.29自动弹出图片（弹出期间禁用滚轮，点击任意位置关闭）
-const popupEl = document.getElementById('popupOverlay7503');
-// 为 bot_7503 图片绑定跳转事件（保存进度）
-const botImg = document.getElementById('bot7503Img');
-if (botImg) {
-    botImg.addEventListener('click', (e) => {
-        e.stopPropagation();
-        sessionStorage.setItem('sceneProgress', currentProgress);
-        sessionStorage.setItem('popup7503Shown', 'true');   // 避免返回后重新弹出
-        window.location.href = 'https://911932517.github.io/22.github.io/';
-    });
-}
-// ★ 进度 0.50 的 bot 图标事件
-const botImg7506 = document.getElementById('bot7506Img');
-if (botImg7506) {
-    botImg7506.addEventListener('click', (e) => {
-        e.stopPropagation();
-        sessionStorage.setItem('sceneProgress', currentProgress);
-        sessionStorage.setItem('popup7506Shown', 'true');
-        window.location.href = 'https://911932517.github.io/22.github.io/';
-    });
-}
-
-// ⬇️ 每次回退到 0.29 以下都重置弹出标记，确保再次越过时触发
-if (currentProgress < 0.29) {
-    popup7503Shown = false;
-}
-
-// ⬇️ 到达 0.29 且标记为 false 时弹出
-if (popupEl && currentProgress >= 0.29 && !popup7503Shown) {
-    popup7503Shown = true;
-    popupEl.classList.add('show');
-    isWheelEnabled = false;
-    // 播放恐龙吼叫
-    if (roarReady && !roarAudio.isPlaying) {
-        roarAudio.play();
+if (!suppressPopupsOnReturn) {
+    // 进度0.29自动弹出图片（弹出期间禁用滚轮，点击任意位置关闭）
+    const popupEl = document.getElementById('popupOverlay7501');
+    // 为 bot_7501 图片绑定跳转事件（保存进度）
+    const botImg = document.getElementById('bot7501Img');
+    if (botImg) {
+        botImg.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sessionStorage.setItem('sceneProgress', currentProgress);
+            sessionStorage.setItem('popup7501Shown', 'true');
+            window.location.href = 'https://911932517.github.io/22.github.io/';
+        });
     }
-    const closePopup = () => {
-        popupEl.classList.remove('show');
-        isWheelEnabled = true;
-    };
-    document.addEventListener('click', closePopup, { once: true });
-}
-// ★ 进度 0.50 的弹出控制（与 0.29 结构完全一致）
-const popupEl7506 = document.getElementById('popupOverlay7506');
-if (currentProgress < 0.52) {
-    popup7506Shown = false;
-}
-if (popupEl7506 && currentProgress >= 0.52 && !popup7506Shown) {
-    popup7506Shown = true;
-    popupEl7506.classList.add('show');
-    isWheelEnabled = false;
-    if (roarReady7506 && !roarAudio7506.isPlaying) {
-        roarAudio7506.play();
+    // ★ 进度 0.50 的 bot 图标事件
+    const botImg7506 = document.getElementById('bot7506Img');
+    if (botImg7506) {
+        botImg7506.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sessionStorage.setItem('sceneProgress', currentProgress);
+            sessionStorage.setItem('popup7506Shown', 'true');
+            window.location.href = 'https://911932517.github.io/22.github.io/';
+        });
     }
-    const closePopup7506 = () => {
-        popupEl7506.classList.remove('show');
-        isWheelEnabled = true;
-    };
-    document.addEventListener('click', closePopup7506, { once: true });
-}
+    // ★ 进度 0.70 的 bot 图标事件
+    const botImg7503 = document.getElementById('bot7503Img');
+    if (botImg7503) {
+        botImg7503.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sessionStorage.setItem('sceneProgress', currentProgress);
+            sessionStorage.setItem('popup7503Shown', 'true');
+            window.location.href = 'https://911932517.github.io/22.github.io/';
+        });
+    }
 
+    // ⬇️ 每次回退到 0.29 以下都重置弹出标记
+    if (currentProgress < 0.29) {
+        popup7501Shown = false;
+    }
+    // 到达 0.29 且标记为 false 时弹出
+    if (popupEl && currentProgress >= 0.29 && !popup7501Shown) {
+        popup7501Shown = true;
+        popupEl.classList.add('show');
+        isWheelEnabled = false;
+        if (roarReady && !roarAudio.isPlaying) {
+            roarAudio.play();
+        }
+        const closePopup = () => {
+            popupEl.classList.remove('show');
+            isWheelEnabled = true;
+        };
+        document.addEventListener('click', closePopup, { once: true });
+    }
+
+    // ★ 进度 0.50 的弹出控制
+    const popupEl7506 = document.getElementById('popupOverlay7506');
+    if (currentProgress < 0.52) {
+        popup7506Shown = false;
+    }
+    if (popupEl7506 && currentProgress >= 0.52 && !popup7506Shown) {
+        popup7506Shown = true;
+        popupEl7506.classList.add('show');
+        isWheelEnabled = false;
+        if (roarReady7506 && !roarAudio7506.isPlaying) {
+            roarAudio7506.play();
+        }
+        const closePopup7506 = () => {
+            popupEl7506.classList.remove('show');
+            isWheelEnabled = true;
+        };
+        document.addEventListener('click', closePopup7506, { once: true });
+    }
+
+    // ★ 进度 0.70 的弹出控制
+    const popupEl7503 = document.getElementById('popupOverlay7503');
+    if (currentProgress < 0.72) {
+        popup7503Shown = false;
+    }
+    if (popupEl7503 && currentProgress >= 0.72 && !popup7503Shown) {
+        popup7503Shown = true;
+        popupEl7503.classList.add('show');
+        isWheelEnabled = false;
+        if (roarReady7503 && !roarAudio7503.isPlaying) {
+            roarAudio7503.play();
+        }
+        const closePopup7503 = () => {
+            popupEl7503.classList.remove('show');
+            isWheelEnabled = true;
+        };
+        document.addEventListener('click', closePopup7503, { once: true });
+    }
+} // ★ 结束 if (!suppressPopupsOnReturn)
             updateCamera(currentProgress);
             composer.render();
         }
