@@ -206,10 +206,10 @@
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: transparent;          /* ★ 背景透明 */
     z-index: 450;
     display: flex;
-    flex-direction: column;      /* 新增：垂直排列子元素 */
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     opacity: 0;
@@ -224,13 +224,12 @@
     transform: scale(1.1);
     filter: drop-shadow(0 0 12px rgba(0,0,0,0.7));
 }
-/* ★ 进度 0.50 弹出层样式 */
 #popupOverlay7506 {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 451;   /* 略高于 7503 防止重叠 */
+    background: transparent;          /* ★ 背景透明 */
+    z-index: 451;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -247,12 +246,11 @@
     transform: scale(1.1);
     filter: drop-shadow(0 0 12px rgba(0,0,0,0.7));
 }
-/* ★ 进度 0.70 弹出层样式 */
 #popupOverlay7501 {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
+    background: transparent;          /* ★ 背景透明 */
     z-index: 452;
     display: flex;
     flex-direction: column;
@@ -270,7 +268,6 @@
     transform: scale(1.1);
     filter: drop-shadow(0 0 12px rgba(0,0,0,0.7));
 }
-
     </style>
 </head>
 <body>
@@ -291,17 +288,17 @@
     <img src="./aa.jpg" style="max-width:80%; max-height:80%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8);" alt="导览图">
 </div>
     <div id="popupOverlay7503">
-    <img src="./7503.PNG" style="max-width:50%; max-height:50%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8); pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
+    <img src="./7503.PNG" style="max-width:50%; max-height:50%; border-radius:20px; pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
     <img id="bot7503Img" src="./bot_7503.png" style="margin-top: -10vh; max-width: 200px; cursor: pointer; filter: drop-shadow(0 0 6px rgba(0,0,0,0.4)); transition: transform 0.3s ease, filter 0.3s ease;" alt="关闭按钮">
 </div>
  <!-- ★ 进度 0.50 弹出层 -->
     <div id="popupOverlay7506">
-    <img src="./7506.PNG" style="max-width:50%; max-height:50%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8); pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
+    <img src="./7506.PNG" style="max-width:50%; max-height:50%; border-radius:20px; pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
     <img id="bot7506Img" src="./bot_7506.png" style="margin-top: -10vh; max-width: 200px; cursor: pointer; filter: drop-shadow(0 0 6px rgba(0,0,0,0.4)); transition: transform 0.3s ease, filter 0.3s ease;" alt="可交互图标">
 </div>
 <!-- ★ 进度 0.70 弹出层 -->
     <div id="popupOverlay7501">
-    <img src="./7501.PNG" style="max-width:50%; max-height:50%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8); pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
+    <img src="./7501.PNG" style="max-width:50%; max-height:50%; border-radius:20px; pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
     <img id="bot7501Img" src="./bot_7501.png" style="margin-top: -10vh; max-width: 200px; cursor: pointer; filter: drop-shadow(0 0 6px rgba(0,0,0,0.4)); transition: transform 0.3s ease, filter 0.3s ease;" alt="可交互图标">
 </div>
     <script type="importmap">
@@ -2047,7 +2044,7 @@
         audioLoader.load('./audio/bgm.mp3', (buffer) => {
             bgmAudio.setBuffer(buffer);
             bgmAudio.setLoop(true);
-            bgmAudio.setVolume(0.5);
+            bgmAudio.setVolume(0.6);
             bgmAudio.autoplay = true;
             if (listener.context.state === 'suspended') {
                 listener.context.resume().then(() => bgmAudio.play());
@@ -2080,10 +2077,27 @@ const roarLoader7503 = new THREE.AudioLoader();
 let roarReady7503 = false;
 roarLoader7503.load('./audio/three.mp3', (buffer) => {
     roarAudio7503.setBuffer(buffer);
-    roarAudio7503.setVolume(1.2);
+    roarAudio7503.setVolume(1.0);
     roarReady7503 = true;
 });
-
+// ★ aa图片鸟叫声
+const birdAudio = new THREE.Audio(listener);
+const birdAudioLoader = new THREE.AudioLoader();
+let birdReady = false;
+birdAudioLoader.load('./audio/bird.mp3', (buffer) => {
+    birdAudio.setBuffer(buffer);
+    birdAudio.setVolume(3.0);
+    birdReady = true;
+});
+// ★ 新增：图标点击反馈音效
+const bovAudio = new THREE.Audio(listener);
+const bovLoader = new THREE.AudioLoader();
+let bovReady = false;
+bovLoader.load('./audio/bov.mp3', (buffer) => {
+    bovAudio.setBuffer(buffer);
+    bovAudio.setVolume(1.2);
+    bovReady = true;
+});
         const musicToggleBtn = document.getElementById('musicToggle');
         musicToggleBtn.addEventListener('click', () => {
             if (!bgmAudio || !bgmAudio.buffer) return;
@@ -2106,6 +2120,14 @@ if (enterBtn) {
         if (titleEl) titleEl.style.display = 'none';
         if (imageOverlay) {
             imageOverlay.classList.add('show');
+
+            // ★ 图片完全显现后（CSS 淡入过渡约 0.5s）播放鸟叫一次
+            if (birdReady) {
+                setTimeout(() => {
+                    if (birdAudio && !birdAudio.isPlaying) birdAudio.play();
+                }, 400);
+            }
+
             setTimeout(() => {
                 imageOverlay.classList.remove('show');
                 if (titleEl) {
@@ -2119,7 +2141,7 @@ if (enterBtn) {
                 updateCamera(0);
                 isWheelEnabled = true;
                 popup7501Shown = false;   // 重置进度0.15弹出状态
-            }, 1000);
+            }, 2000);
         } else {
             isWheelEnabled = true;
         }
@@ -2351,9 +2373,13 @@ if (!suppressPopupsOnReturn) {
     if (botImg) {
         botImg.addEventListener('click', (e) => {
             e.stopPropagation();
+            // 播放点击音效
+            if (bovReady && !bovAudio.isPlaying) {
+                bovAudio.play();
+            }
             sessionStorage.setItem('sceneProgress', currentProgress);
             sessionStorage.setItem('popup7501Shown', 'true');
-            window.location.href = 'https://911932517.github.io/22.github.io/';
+            window.location.href = 'https://911932517.github.io/13.github.io/';
         });
     }
     // ★ 进度 0.50 的 bot 图标事件
@@ -2361,9 +2387,13 @@ if (!suppressPopupsOnReturn) {
     if (botImg7506) {
         botImg7506.addEventListener('click', (e) => {
             e.stopPropagation();
+            // 播放点击音效
+            if (bovReady && !bovAudio.isPlaying) {
+                bovAudio.play();
+            }
             sessionStorage.setItem('sceneProgress', currentProgress);
             sessionStorage.setItem('popup7506Shown', 'true');
-            window.location.href = 'https://911932517.github.io/22.github.io/';
+            window.location.href = 'https://j-jjp.github.io/dargon/index.html';
         });
     }
     // ★ 进度 0.70 的 bot 图标事件
@@ -2371,6 +2401,10 @@ if (!suppressPopupsOnReturn) {
     if (botImg7503) {
         botImg7503.addEventListener('click', (e) => {
             e.stopPropagation();
+            // 播放点击音效
+            if (bovReady && !bovAudio.isPlaying) {
+                bovAudio.play();
+            }
             sessionStorage.setItem('sceneProgress', currentProgress);
             sessionStorage.setItem('popup7503Shown', 'true');
             window.location.href = 'https://911932517.github.io/22.github.io/';
