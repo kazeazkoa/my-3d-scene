@@ -133,7 +133,7 @@
             transform: translate(-50%, -120%)translateX(-10px);
             border: 2px solid rgba(0, 0, 0, 0.5);
         }
-        #imageOverlay {
+#imageOverlay {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
@@ -148,7 +148,8 @@
 }
 #imageOverlay.show {
     opacity: 1;
-    pointer-events: auto;         /* 显示时可交互 */
+    pointer-events: auto;
+    cursor: none;                /* 鼠标指针透明/隐藏 */
 }
 .corner-info {
     position: fixed;
@@ -190,6 +191,86 @@
     line-height: 1.3;
     font-family: 'Poppins', 'Microsoft YaHei', sans-serif;
 }
+/* 右上角固定图片 */
+.corner-topright {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 250;                /* 与左下角层级一致，高于场景低于音乐按钮 */
+    max-width: 100px;            /* 尺寸可按需调整 */
+    height: auto;
+    pointer-events: none;        /* 不阻挡交互 */
+    filter: drop-shadow(0 0 6px rgba(0,0,0,0.3));
+}
+#popupOverlay7503 {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 450;
+    display: flex;
+    flex-direction: column;      /* 新增：垂直排列子元素 */
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease-out;
+}
+#popupOverlay7503.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+#bot7503Img:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 12px rgba(0,0,0,0.7));
+}
+/* ★ 进度 0.50 弹出层样式 */
+#popupOverlay7506 {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 451;   /* 略高于 7503 防止重叠 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease-out;
+}
+#popupOverlay7506.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+#bot7506Img:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 12px rgba(0,0,0,0.7));
+}
+/* ★ 进度 0.70 弹出层样式 */
+#popupOverlay7501 {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 452;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.8s ease-out;
+}
+#popupOverlay7501.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+#bot7501Img:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 12px rgba(0,0,0,0.7));
+}
+
     </style>
 </head>
 <body>
@@ -203,14 +284,29 @@
     <div class="title-text">DINOSAURS</div>
     <div class="subtitle-text">成都自然博物馆恐龙厅动态游览</div>
     <div class="enter-text" id="enterBtn">ENTER</div>
-    </div>
+</div>
+    <img id="cornerTopRight" src="./cc.png" class="corner-topright" alt="右上角标识">
 
-<div id="imageOverlay">
-    <img src="./aa.jpg" style="max-width:80%; max-height:80%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8); cursor:pointer;" alt="导览图">
+    <div id="imageOverlay">
+    <img src="./aa.jpg" style="max-width:80%; max-height:80%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8);" alt="导览图">
+</div>
+    <div id="popupOverlay7503">
+    <img src="./7503.PNG" style="max-width:50%; max-height:50%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8); pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
+    <img id="bot7503Img" src="./bot_7503.png" style="margin-top: -10vh; max-width: 200px; cursor: pointer; filter: drop-shadow(0 0 6px rgba(0,0,0,0.4)); transition: transform 0.3s ease, filter 0.3s ease;" alt="关闭按钮">
+</div>
+ <!-- ★ 进度 0.50 弹出层 -->
+    <div id="popupOverlay7506">
+    <img src="./7506.PNG" style="max-width:50%; max-height:50%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8); pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
+    <img id="bot7506Img" src="./bot_7506.png" style="margin-top: -10vh; max-width: 200px; cursor: pointer; filter: drop-shadow(0 0 6px rgba(0,0,0,0.4)); transition: transform 0.3s ease, filter 0.3s ease;" alt="可交互图标">
+</div>
+<!-- ★ 进度 0.70 弹出层 -->
+    <div id="popupOverlay7501">
+    <img src="./7501.PNG" style="max-width:50%; max-height:50%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8); pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
+    <img id="bot7501Img" src="./bot_7501.png" style="margin-top: -10vh; max-width: 200px; cursor: pointer; filter: drop-shadow(0 0 6px rgba(0,0,0,0.4)); transition: transform 0.3s ease, filter 0.3s ease;" alt="可交互图标">
 </div>
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
-    </script>
+</script>
     <div id="spinoHint" class="hint-bubble">哈哈</div>
     <script type="module">
         import * as THREE from 'three';
@@ -720,37 +816,16 @@
             (error) => console.error('霸王龙模型加载失败:', error)
         );
 
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        let isHoveringTrex = false;
         let spinosaurusModel = null;
         let spinoPosition = null;
         let spinoHintTimer = null;
         let spinoHintShown = false;
-
-        window.addEventListener('mousemove', (event) => {
-            mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-            mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-
-            if (trexModel) {
-                raycaster.setFromCamera(mouse, camera);
-                const intersects = raycaster.intersectObject(trexModel, true);
-                isHoveringTrex = intersects.length > 0;
-                if (isHoveringTrex && roarReady && !roarAudio.isPlaying) {
-                    roarAudio.play();
-                }
-            }
-        });
-
-        window.addEventListener('click', () => {
-            if (isHoveringTrex) {
-                setTimeout(() => {
-                    sessionStorage.setItem('sceneProgress', currentProgress);
-                    window.location.href = 'https://911932517.github.io/22.github.io/';
-                }, 1500);
-            }
-        });
-
+        let popup7503Shown = false;   // 进度0.15弹出是否已触发
+        let popup7506Shown = false;   // 进度0.50弹出是否已触发
+        let popup7501Shown = false;   // 进度0.70弹出是否已触发
+        let isWheelEnabled = false; 
+        let returnedFromExternal = false; // ★ 从外部返回标志，用于控制标题浮现
+        let suppressPopupsOnReturn = false; // ★ 从外部返回时禁止所有弹出
         // ========== 6. 第二个恐龙模型 (protoceratops) ==========
         const model2Pos = { x: -10, z: -17 };
         const model2TerrainY = getTerrainHeight(model2Pos.x, model2Pos.z);
@@ -1981,7 +2056,7 @@
             }
         }, undefined, (error) => console.error('❌ 背景音乐加载失败:', error));
 
-        // 音效
+        // ★ 进度 0.29 吼叫音频
         const roarAudio = new THREE.Audio(listener);
         const roarLoader = new THREE.AudioLoader();
         let roarReady = false;
@@ -1990,6 +2065,24 @@
             roarAudio.setVolume(1.2);
             roarReady = true;
         });
+        // ★ 进度 0.50 吼叫音频
+const roarAudio7506 = new THREE.Audio(listener);
+const roarLoader7506 = new THREE.AudioLoader();
+let roarReady7506 = false;
+roarLoader7506.load('./audio/two.mp3', (buffer) => {
+    roarAudio7506.setBuffer(buffer);
+    roarAudio7506.setVolume(1.2);
+    roarReady7506 = true;
+});
+// ★ 进度 0.70 吼叫音频
+const roarAudio7503 = new THREE.Audio(listener);
+const roarLoader7503 = new THREE.AudioLoader();
+let roarReady7503 = false;
+roarLoader7503.load('./audio/three.mp3', (buffer) => {
+    roarAudio7503.setBuffer(buffer);
+    roarAudio7503.setVolume(1.2);
+    roarReady7503 = true;
+});
 
         const musicToggleBtn = document.getElementById('musicToggle');
         musicToggleBtn.addEventListener('click', () => {
@@ -2025,34 +2118,67 @@ if (enterBtn) {
                 targetProgress = 0;
                 updateCamera(0);
                 isWheelEnabled = true;
-            }, 1500);
+                popup7501Shown = false;   // 重置进度0.15弹出状态
+            }, 1000);
         } else {
             isWheelEnabled = true;
         }
     });
 }
 
-        // ========== 滚轮控制 ==========
-        let currentProgress = 0.0;
-        let targetProgress = 0.0;
-        const savedProgress = sessionStorage.getItem('sceneProgress');
-        if (savedProgress !== null) {
-            const val = parseFloat(savedProgress);
-            if (!isNaN(val)) {
-                currentProgress = val;
-                targetProgress = val;
-            }
-        }
+       // ========== 滚轮控制 ==========
+let currentProgress = 0.0;
+let targetProgress = 0.0;
 
-        const wheelStep = 0.01;
-        const smoothFactor = 0.05;
-        const LOCK_PROGRESS = 0.85;
-        let isWheelEnabled = false; 
+// 恢复进度（从 sessionStorage）
+const savedProgress = sessionStorage.getItem('sceneProgress');
+if (savedProgress !== null) {
+    const val = parseFloat(savedProgress);
+    if (!isNaN(val)) {
+        currentProgress = val;
+        targetProgress = val;
+    }
+}
+// 恢复 0.29 弹出状态
+if (sessionStorage.getItem('popup7501Shown') === 'true') {
+    popup7501Shown = true;
+}
+// 恢复 0.50 弹出状态
+if (sessionStorage.getItem('popup7506Shown') === 'true') {
+    popup7506Shown = true;
+}
+// 恢复 0.70 弹出状态
+if (sessionStorage.getItem('popup7503Shown') === 'true') {
+    popup7503Shown = true;
+}
+// 从外部返回：先隐藏标题，隐藏 ENTER，启用滚轮；标题将在滚回起点时浮现
+if (savedProgress !== null) {
+    returnedFromExternal = true;                 // ★ 标记从外部返回
+    suppressPopupsOnReturn = true;
+    const titleEl = document.getElementById('startTitle');
+    if (titleEl) {
+        titleEl.style.display = 'flex';         // 保持布局
+        titleEl.style.opacity = '0';            // 初始完全透明
+    }
+    const enterBtn = document.getElementById('enterBtn');
+    if (enterBtn) enterBtn.style.display = 'none';
+    isWheelEnabled = true;
+    // ★ 外部返回时，将已越过的进度点标记为“已弹出”，避免滚动后误弹
+    if (currentProgress >= 0.29 && !popup7501Shown) popup7501Shown = true;
+    if (currentProgress >= 0.52 && !popup7506Shown) popup7506Shown = true;
+    if (currentProgress >= 0.72 && !popup7503Shown) popup7503Shown = true;
+}
 
+const wheelStep = 0.01;
+const smoothFactor = 0.05;
+const LOCK_PROGRESS = 0.85;
         window.addEventListener('wheel', (e) => {
             e.preventDefault();
             if (!isWheelEnabled) return;  
             if (currentProgress >= LOCK_PROGRESS) return;
+            // ★ 用户开始滚动后，恢复正常的弹出逻辑
+            if (suppressPopupsOnReturn) suppressPopupsOnReturn = false;
+            targetProgress += (e.deltaY > 0) ? wheelStep : -wheelStep;
             targetProgress += (e.deltaY > 0) ? wheelStep : -wheelStep;
             targetProgress = Math.min(LOCK_PROGRESS, Math.max(0.0, targetProgress));
         }, { passive: false });
@@ -2159,10 +2285,19 @@ if (enterBtn) {
             }
 
             const titleEl = document.getElementById('startTitle');
-            if (titleEl) {
-                const fadeThreshold = 0.04;
-                titleEl.style.opacity = Math.max(0, 1 - currentProgress / fadeThreshold);
-            }
+if (titleEl) {
+    if (returnedFromExternal) {
+        // ★ 从外部返回：标题在进度接近 0 时慢慢浮现
+        const fadeInThreshold = 0.035;          // 开始浮现的进度值
+        const fadeInProgress = Math.max(0, fadeInThreshold - currentProgress);
+        titleEl.style.opacity = Math.min(1, fadeInProgress / fadeInThreshold);
+    } else {
+        // 正常进入：标题随进度淡出
+        const fadeThreshold = 0.04;
+        titleEl.style.opacity = Math.max(0, 1 - currentProgress / fadeThreshold);
+    }
+}
+
 
             // 棘龙提示（仅靠近时显示一次）
             const hintEl = document.getElementById('spinoHint');
@@ -2195,7 +2330,97 @@ if (enterBtn) {
                     }
                 }
             }
+if (!suppressPopupsOnReturn) {
+    // 进度0.29自动弹出图片（弹出期间禁用滚轮，点击任意位置关闭）
+    const popupEl = document.getElementById('popupOverlay7501');
+    // 为 bot_7501 图片绑定跳转事件（保存进度）
+    const botImg = document.getElementById('bot7501Img');
+    if (botImg) {
+        botImg.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sessionStorage.setItem('sceneProgress', currentProgress);
+            sessionStorage.setItem('popup7501Shown', 'true');
+            window.location.href = 'https://911932517.github.io/22.github.io/';
+        });
+    }
+    // ★ 进度 0.50 的 bot 图标事件
+    const botImg7506 = document.getElementById('bot7506Img');
+    if (botImg7506) {
+        botImg7506.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sessionStorage.setItem('sceneProgress', currentProgress);
+            sessionStorage.setItem('popup7506Shown', 'true');
+            window.location.href = 'https://911932517.github.io/22.github.io/';
+        });
+    }
+    // ★ 进度 0.70 的 bot 图标事件
+    const botImg7503 = document.getElementById('bot7503Img');
+    if (botImg7503) {
+        botImg7503.addEventListener('click', (e) => {
+            e.stopPropagation();
+            sessionStorage.setItem('sceneProgress', currentProgress);
+            sessionStorage.setItem('popup7503Shown', 'true');
+            window.location.href = 'https://911932517.github.io/22.github.io/';
+        });
+    }
 
+    // ⬇️ 每次回退到 0.29 以下都重置弹出标记
+    if (currentProgress < 0.29) {
+        popup7501Shown = false;
+    }
+    // 到达 0.29 且标记为 false 时弹出
+    if (popupEl && currentProgress >= 0.29 && !popup7501Shown) {
+        popup7501Shown = true;
+        popupEl.classList.add('show');
+        isWheelEnabled = false;
+        if (roarReady && !roarAudio.isPlaying) {
+            roarAudio.play();
+        }
+        const closePopup = () => {
+            popupEl.classList.remove('show');
+            isWheelEnabled = true;
+        };
+        document.addEventListener('click', closePopup, { once: true });
+    }
+
+    // ★ 进度 0.50 的弹出控制
+    const popupEl7506 = document.getElementById('popupOverlay7506');
+    if (currentProgress < 0.52) {
+        popup7506Shown = false;
+    }
+    if (popupEl7506 && currentProgress >= 0.52 && !popup7506Shown) {
+        popup7506Shown = true;
+        popupEl7506.classList.add('show');
+        isWheelEnabled = false;
+        if (roarReady7506 && !roarAudio7506.isPlaying) {
+            roarAudio7506.play();
+        }
+        const closePopup7506 = () => {
+            popupEl7506.classList.remove('show');
+            isWheelEnabled = true;
+        };
+        document.addEventListener('click', closePopup7506, { once: true });
+    }
+
+    // ★ 进度 0.70 的弹出控制
+    const popupEl7503 = document.getElementById('popupOverlay7503');
+    if (currentProgress < 0.72) {
+        popup7503Shown = false;
+    }
+    if (popupEl7503 && currentProgress >= 0.72 && !popup7503Shown) {
+        popup7503Shown = true;
+        popupEl7503.classList.add('show');
+        isWheelEnabled = false;
+        if (roarReady7503 && !roarAudio7503.isPlaying) {
+            roarAudio7503.play();
+        }
+        const closePopup7503 = () => {
+            popupEl7503.classList.remove('show');
+            isWheelEnabled = true;
+        };
+        document.addEventListener('click', closePopup7503, { once: true });
+    }
+} // ★ 结束 if (!suppressPopupsOnReturn)
             updateCamera(currentProgress);
             composer.render();
         }
