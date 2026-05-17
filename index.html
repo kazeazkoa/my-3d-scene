@@ -298,20 +298,23 @@
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
-    background: rgba(0,0,0,0.6);   /* 与 aa 图片一致的半透明黑 */
+    background: rgba(0,0,0,0.6);
     z-index: 500;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0;
     pointer-events: none;
-    /* 移除 transition，实现无渐入效果 */
 ">
     <img id="teamImg" src="./team.png" style="
-        max-width:60%;
-        max-height: 60%;
+        max-width: 100%;
+        max-height: 100%;
+        width: auto;
+        height: auto;
         object-fit: contain;
         box-shadow: 0 0 30px rgba(0,0,0,0.8);
+        /* 动画曲线：弹性缩放 */
+        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
     " alt="Team">
 </div>
     <div id="popupOverlay7503">
@@ -2666,17 +2669,70 @@ document.addEventListener('click', (event) => {
 // ★ 左下角 logo 点击显示 team.png
 const cornerLogo = document.getElementById('cornerLogo');
 const teamOverlay = document.getElementById('teamOverlay');
-if (cornerLogo && teamOverlay) {
+const teamImg = document.getElementById('teamImg');
+let teamStartX = 0, teamStartY = 0;   // 记录起始偏移
+
+if (cornerLogo && teamOverlay && teamImg) {
     cornerLogo.style.cursor = 'pointer';
+    
+    // 打开：从 bb 图标处缩放至屏幕中央，尺寸 60%
     cornerLogo.addEventListener('click', (e) => {
         e.stopPropagation();
+        
+        // 计算 bb 图标中心相对于视口中心的偏移
+        const bbRect = cornerLogo.getBoundingClientRect();
+        const bbCX = bbRect.left + bbRect.width / 2;
+        const bbCY = bbRect.top + bbRect.height / 2;
+        const vw = window.innerWidth / 2;
+        const vh = window.innerHeight / 2;
+        teamStartX = bbCX - vw;
+        teamStartY = bbCY - vh;
+        
+        // 初始状态：位于 bb 处，缩小为 0
+        teamImg.style.transition = 'none';
+        teamImg.style.transform = `translate(${teamStartX}px, ${teamStartY}px) scale(0)`;
+        
         teamOverlay.style.opacity = '1';
         teamOverlay.style.pointerEvents = 'auto';
+        
+        // 下一帧播放动画
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                teamImg.style.transition = 'transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+                teamImg.style.transform = 'translate(0, 0) scale(0.6)';
+            });
+        });
     });
-    // 点击黑色背景关闭
-    teamOverlay.addEventListener('click', () => {
-        teamOverlay.style.opacity = '0';
-        teamOverlay.style.pointerEvents = 'none';
+    
+    // 关闭：反向动画回 bb 处并缩小至 0
+    const closeTeam = () => {
+    // 第一步：先放大一点（0.6 → 0.8），持续 0.25s
+    teamImg.style.transition = 'transform 0.20s ease-out';
+    teamImg.style.transform = 'translate(0, 0) scale(0.7)';
+    
+    const step2 = () => {
+        // 第二步：缩小回 0 并平移到 bb 处
+        teamImg.style.transition = 'transform 0.45s ease-in';
+        teamImg.style.transform = `translate(${teamStartX}px, ${teamStartY}px) scale(0)`;
+        
+        const onEnd = () => {
+            teamOverlay.style.opacity = '0';
+            teamOverlay.style.pointerEvents = 'none';
+            teamImg.style.transition = 'none';
+            teamImg.removeEventListener('transitionend', onEnd);
+        };
+        teamImg.addEventListener('transitionend', onEnd);
+    };
+    
+    // 监听第一步结束，然后触发第二步
+    const onStep1End = () => {
+        teamImg.removeEventListener('transitionend', onStep1End);
+        step2();
+    };
+    teamImg.addEventListener('transitionend', onStep1End);
+};
+    teamOverlay.addEventListener('click', (e) => {
+        if (e.target === teamOverlay) closeTeam();  // 仅点击背景关闭
     });
 }
         animate();
