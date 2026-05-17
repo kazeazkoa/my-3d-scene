@@ -159,7 +159,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;          /* 让 Logo 与文字居中对齐 */
+    pointer-events: auto;
+}
+/* 新增：文字不拦截鼠标事件 */
+.corner-text, .corner-text-en {
     pointer-events: none;
+}
+.corner-logo {
+    cursor: pointer;              /* 悬停时手型 */
 }
 
 /* Logo 图片（移除独立定位，现在由容器控制） */
@@ -287,6 +294,26 @@
     <div id="imageOverlay">
     <img src="./aa.jpg" style="max-width:80%; max-height:80%; border-radius:20px; box-shadow:0 0 40px rgba(0,0,0,0.8);" alt="导览图">
 </div>
+<div id="teamOverlay" style="
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: black;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+">
+    <img id="teamImg" src="./team.png" style="
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        box-shadow: 0 0 30px rgba(0,0,0,0.8);
+    " alt="Team">
+</div>
     <div id="popupOverlay7503">
     <img src="./7503.PNG" style="max-width:50%; max-height:50%; border-radius:20px; pointer-events:none; transform: translateY(-10vh);" alt="提示图片">
     <img id="bot7503Img" src="./bot_7503.png" style="margin-top: -10vh; max-width: 200px; cursor: pointer; filter: drop-shadow(0 0 6px rgba(0,0,0,0.4)); transition: transform 0.3s ease, filter 0.3s ease;" alt="关闭按钮">
@@ -304,7 +331,77 @@
     <script type="importmap">
         { "imports": { "three": "https://unpkg.com/three@0.128.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/" } }
 </script>
-    <div id="spinoHint" class="hint-bubble">哈哈</div>
+<!-- 修改后 -->
+<img id="spinoHintImg" src="./IMG_7876.PNG" style="
+    position: fixed;
+    z-index: 250;
+    pointer-events: none;
+    opacity: 0;
+    max-width: 180px;
+    height: auto;
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    transform: translate(-50%, -120%);
+">
+<img id="spinoHintImg2" src="./IMG_7879.PNG" style="
+    position: fixed;
+    z-index: 250;
+    pointer-events: none;
+    opacity: 0;
+    max-width: 120px;
+    height: auto;
+    filter: drop-shadow(0 0 8px rgba(0,0,0,0.4));
+    transform: translate(-50%, -130%);
+">
+<!-- ★ 新增：棘龙点击前动图 light.gif -->
+<img id="spinoLight" src="./light.gif" style="
+    position: fixed;
+    z-index: 249;
+    pointer-events: none;
+    opacity: 0;
+    max-width: 155px;
+    height: auto;
+    filter: drop-shadow(0 0 8px rgba(255, 215, 17, 0.6));
+    transform: translate(-50%, -120%);
+">
+<!-- ★ 新增底部白色对话框 -->
+<div id="spinoDialog" style="
+    position: fixed;
+    bottom: 15vh;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 252;
+    pointer-events: none;
+    cursor: pointer; 
+    opacity: 0;
+    background: rgba(255, 255, 255, 0.92);
+    color: #333;
+    width: 740px;                
+    height: 100px;                
+    padding: 0;                  
+    display: flex;              
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border-radius: 10px;
+    font-size: 30px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    font-family: 'Microsoft YaHei', 'Poppins', sans-serif;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    white-space: normal;      
+    overflow: hidden;          
+">从明天起，做一个幸福的人</div>
+
+    position: fixed;
+    z-index: 250;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    max-width: 180px;
+    height: auto;
+    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+    transform: translate(-50%, -120%);
+">
     <script type="module">
         import * as THREE from 'three';
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
@@ -815,8 +912,38 @@
 
         let spinosaurusModel = null;
         let spinoPosition = null;
-        let spinoHintTimer = null;
-        let spinoHintShown = false;
+        let spinoHintImg = document.getElementById('spinoHintImg');
+        let spinoHintImg2 = document.getElementById('spinoHintImg2');
+        let spinoBubbleVisible = false;
+        let spinoDialog = document.getElementById('spinoDialog');
+        let spinoLight = document.getElementById('spinoLight');   // ★ 动图
+// ★ 点击对话框切换子图
+if (spinoDialog) {
+    spinoDialog.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (spinoHintImg2) {
+            // 第一次点击：7879 → 7877
+            if (spinoHintImg2.src.includes('IMG_7879.PNG')) {
+                spinoHintImg2.src = './7877.PNG';
+                spinoDialog.textContent = '喂马，劈柴，周游世界';
+                if (bovReady && !bovAudio.isPlaying) {
+                    bovAudio.play();
+                }
+            }
+            // 第二次点击：7877 → 7878
+            else if (spinoHintImg2.src.includes('7877.PNG')) {
+                spinoHintImg2.src = './IMG_7878.PNG';
+                spinoDialog.textContent = '我有一所房子，面朝大海，春暖花开。';
+                if (bovReady && !bovAudio.isPlaying) {
+                    bovAudio.play();
+                }
+            }
+            // 已经是 7878 时不变化
+        }
+    });
+}
+const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
         let popup7503Shown = false;   // 进度0.15弹出是否已触发
         let popup7506Shown = false;   // 进度0.50弹出是否已触发
         let popup7501Shown = false;   // 进度0.70弹出是否已触发
@@ -2333,38 +2460,6 @@ if (titleEl) {
     }
 }
 
-
-            // 棘龙提示（仅靠近时显示一次）
-            const hintEl = document.getElementById('spinoHint');
-            if (hintEl && spinoPosition) {
-                const nearSpino = Math.abs(currentProgress - 0.85) < 0.03;
-                if (nearSpino && !spinoHintShown) {
-                    const hintWorldPos = spinoPosition.clone().add(new THREE.Vector3(0, 6.5, 0));
-                    const screenPos = hintWorldPos.clone().project(camera);
-                    if (screenPos.z > 0 && screenPos.z < 1) {
-                        const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-                        const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
-                        hintEl.style.left = x + 'px';
-                        hintEl.style.top = y + 'px';
-                        if (!spinoHintTimer) {
-                            hintEl.style.opacity = '1';
-                            spinoHintTimer = setTimeout(() => {
-                                hintEl.style.opacity = '0';
-                                spinoHintShown = true;
-                                spinoHintTimer = null;
-                            }, 2000);
-                        }
-                    } else {
-                        hintEl.style.opacity = '0';
-                    }
-                } else {
-                    hintEl.style.opacity = '0';
-                    if (spinoHintTimer) {
-                        clearTimeout(spinoHintTimer);
-                        spinoHintTimer = null;
-                    }
-                }
-            }
 if (!suppressPopupsOnReturn) {
     // 进度0.29自动弹出图片（弹出期间禁用滚轮，点击任意位置关闭）
     const popupEl = document.getElementById('popupOverlay7501');
@@ -2468,10 +2563,120 @@ if (!suppressPopupsOnReturn) {
         document.addEventListener('click', closePopup7503, { once: true });
     }
 } // ★ 结束 if (!suppressPopupsOnReturn)
+// 棘龙点击前动图（进度接近0.85且未点击时显示）
+            if (spinoLight && spinoPosition) {
+                const nearSpino = Math.abs(currentProgress - 0.85) < 0.03;
+                if (nearSpino && !spinoBubbleVisible) {
+                    const lightWorldPos = spinoPosition.clone().add(new THREE.Vector3(-1.0, -1.4, 0)); // 高于气泡
+                    const screenPos = lightWorldPos.clone().project(camera);
+                    if (screenPos.z > 0 && screenPos.z < 1) {
+                        const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
+                        const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
+                        spinoLight.style.left = (x + 10) + 'px';
+                        spinoLight.style.top = (y - 90) + 'px';
+                        spinoLight.style.opacity = '1';
+                    } else {
+                        spinoLight.style.opacity = '0';
+                    }
+                } else {
+                    spinoLight.style.opacity = '0';
+                }
+            }
+
+ // 棘龙点击气泡（点击出现，远离进度隐藏）
+             if (spinoHintImg && spinoHintImg2 && spinoPosition) {
+                const nearSpino = Math.abs(currentProgress - 0.85) < 0.03;
+                if (spinoBubbleVisible && nearSpino) {
+                    const hintWorldPos = spinoPosition.clone().add(new THREE.Vector3(0, 7.0, 0));
+                    const screenPos = hintWorldPos.clone().project(camera);
+                    if (screenPos.z > 0 && screenPos.z < 1) {
+                        const baseX = (screenPos.x * 0.5 + 0.5) * window.innerWidth + 140;
+                        const baseY = (-screenPos.y * 0.5 + 0.5) * window.innerHeight + 80;
+                        spinoHintImg.style.left = baseX + 'px';
+                        spinoHintImg.style.top = baseY + 'px';
+                        spinoHintImg.style.opacity = '1';
+                        spinoHintImg2.style.left = (baseX + 0) + 'px';
+                        spinoHintImg2.style.top = (baseY - 66) + 'px';
+                        spinoHintImg2.style.opacity = '1';
+                        // 显示底部对话框并允许点击
+                        if (spinoDialog) {
+                            spinoDialog.style.opacity = '1';
+                            spinoDialog.style.pointerEvents = 'auto';
+                        }
+                     } else {
+                        spinoHintImg.style.opacity = '0';
+                        spinoHintImg2.style.opacity = '0';
+                        spinoHintImg2.src = './IMG_7879.PNG';   // ★ 重置
+                        if (spinoDialog) {
+                            spinoDialog.style.opacity = '0';
+                            spinoDialog.style.pointerEvents = 'none';
+                        }
+                    }
+                } else {
+                    spinoHintImg.style.opacity = '0';
+                    spinoHintImg2.style.opacity = '0';
+                    spinoHintImg2.src = './IMG_7879.PNG';   // ★ 重置
+                    if (spinoDialog) {
+                        spinoDialog.style.opacity = '0';
+                        spinoDialog.style.pointerEvents = 'none';
+                        spinoDialog.textContent = '从明天起，做一个幸福的人';
+                    }
+                    spinoBubbleVisible = false;
+                }
+            }
+
             updateCamera(currentProgress);
             composer.render();
         }
+        renderer.domElement.addEventListener('click', (event) => {
+    // ★ 点击空白处关闭气泡（当子图为 IMG_7878 时）
+document.addEventListener('click', (event) => {
+    // 检查气泡是否可见且子图已切换到 7878
+    if (spinoHintImg2 && spinoHintImg2.style.opacity === '1' && spinoHintImg2.src.includes('IMG_7878.PNG')) {
+        // 如果点击的目标不是对话框本身
+        if (!spinoDialog || !spinoDialog.contains(event.target)) {
+            // 隐藏气泡和对话框
+            if (spinoHintImg) spinoHintImg.style.opacity = '0';
+            spinoHintImg2.style.opacity = '0';
+            spinoHintImg2.src = './IMG_7879.PNG';   // 重置子图
+            if (spinoDialog) {
+                spinoDialog.style.opacity = '0';
+                spinoDialog.style.pointerEvents = 'none';
+                spinoDialog.textContent = '从明天起，做一个幸福的人';
+            }
+            spinoBubbleVisible = false;
+        }
+    }
+});        
+    if (!spinosaurusModel) return;   // 棘龙未加载
+    // 计算鼠标归一化坐标
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
+    raycaster.setFromCamera(mouse, camera);
+
+    // 检测棘龙模型（递归检测所有子 Mesh）
+    const intersects = raycaster.intersectObject(spinosaurusModel, true);
+    if (intersects.length > 0) {
+        spinoBubbleVisible = true;   // 显示气泡
+    }
+});
+// ★ 左下角 logo 点击显示 team.png
+const cornerLogo = document.getElementById('cornerLogo');
+const teamOverlay = document.getElementById('teamOverlay');
+if (cornerLogo && teamOverlay) {
+    cornerLogo.style.cursor = 'pointer';
+    cornerLogo.addEventListener('click', (e) => {
+        e.stopPropagation();
+        teamOverlay.style.opacity = '1';
+        teamOverlay.style.pointerEvents = 'auto';
+    });
+    // 点击黑色背景关闭
+    teamOverlay.addEventListener('click', () => {
+        teamOverlay.style.opacity = '0';
+        teamOverlay.style.pointerEvents = 'none';
+    });
+}
         animate();
 
         window.addEventListener('resize', () => {
