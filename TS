@@ -355,17 +355,6 @@
     filter: drop-shadow(0 0 8px rgba(0,0,0,0.4));
     transform: translate(-50%, -130%);
 ">
-<!-- ★ 新增：棘龙点击前动图 light.gif -->
-<img id="spinoLight" src="./light.gif" style="
-    position: fixed;
-    z-index: 249;
-    pointer-events: none;
-    opacity: 0;
-    max-width: 50px;
-    height: auto;
-    filter: drop-shadow(0 0 8px rgba(255, 215, 17, 0.6));
-    transform: translate(-50%, -120%);
-">
 <!-- ★ 新增底部白色对话框 -->
 <div id="spinoDialog" style="
     position: fixed;
@@ -919,13 +908,9 @@
         let spinoHintImg2 = document.getElementById('spinoHintImg2');
         let spinoBubbleVisible = false;
         let spinoDialog = document.getElementById('spinoDialog');
-        let spinoLight = document.getElementById('spinoLight');   // ★ 动图
-        let spinoLightDisabled = false;   // ★ 点击对话框后禁用动图
-// ★ 点击对话框切换子图
 if (spinoDialog) {
     spinoDialog.addEventListener('click', (e) => {
         e.stopPropagation();
-        spinoLightDisabled = true;   // ★ 点击对话框后永久禁用动图
         if (spinoHintImg2) {
             // 第一次点击：7879 → 7877
             if (spinoHintImg2.src.includes('IMG_7879.PNG')) {
@@ -2568,26 +2553,6 @@ if (!suppressPopupsOnReturn) {
         document.addEventListener('click', closePopup7503, { once: true });
     }
 } // ★ 结束 if (!suppressPopupsOnReturn)
-// 棘龙点击前动图（进度接近0.85且未点击时显示）
-            if (spinoLight && spinoPosition) {
-                const nearSpino = Math.abs(currentProgress - 0.85) < 0.03;
-                if (nearSpino && !spinoBubbleVisible && !spinoLightDisabled) { 
-                    const lightWorldPos = spinoPosition.clone().add(new THREE.Vector3(-1.0, 1.0, 0)); // 高于气泡
-                    const screenPos = lightWorldPos.clone().project(camera);
-                    if (screenPos.z > 0 && screenPos.z < 1) {
-                        const x = (screenPos.x * 0.5 + 0.5) * window.innerWidth;
-                        const y = (-screenPos.y * 0.5 + 0.5) * window.innerHeight;
-                        spinoLight.style.left = (x + 10) + 'px';
-                        spinoLight.style.top = (y - 4) + 'px';
-                        spinoLight.style.opacity = '1';
-                    } else {
-                        spinoLight.style.opacity = '0';
-                    }
-                } else {
-                    spinoLight.style.opacity = '0';
-                }
-            }
-
  // 棘龙点击气泡（点击出现，远离进度隐藏）
              if (spinoHintImg && spinoHintImg2 && spinoPosition) {
                 const nearSpino = Math.abs(currentProgress - 0.85) < 0.03;
