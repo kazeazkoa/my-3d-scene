@@ -2464,7 +2464,7 @@ if (!suppressPopupsOnReturn) {
             }
             sessionStorage.setItem('sceneProgress', currentProgress);
             sessionStorage.setItem('popup7501Shown', 'true');
-            window.location.href = 'https://911932517.github.io/13.github.io/';
+            window.location.href = 'https://kazeazkoa.github.io/roll/';
         });
     }
     // ★ 进度 0.50 的 bot 图标事件
@@ -2478,7 +2478,7 @@ if (!suppressPopupsOnReturn) {
             }
             sessionStorage.setItem('sceneProgress', currentProgress);
             sessionStorage.setItem('popup7506Shown', 'true');
-            window.location.href = 'https://j-jjp.github.io/dargon/index.html';
+            window.location.href = 'https://911932517.github.io/13.github.io/';
         });
     }
     // ★ 进度 0.70 的 bot 图标事件
