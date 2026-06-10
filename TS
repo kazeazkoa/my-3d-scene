@@ -602,12 +602,6 @@
         cameraCurve.closed = false;
         cameraCurve.tension = 0.5;
 
-        const trailPoints = cameraCurve.getPoints(600);
-        const trailGeometry = new THREE.BufferGeometry().setFromPoints(trailPoints);
-        const trailMaterial = new THREE.LineBasicMaterial({ color: 0x88aacc });
-        const curveTrail = new THREE.Line(trailGeometry, trailMaterial);
-        scene.add(curveTrail);
-
         // ========== 3. 道路 (石子小径) ==========
         const pathWidth = 5.0;
         const segmentsPerMeter = 1.8;
